@@ -9,99 +9,52 @@
 // defines for taxi_approx2
 #define TAN_PI_8  0.414213562373095
 
-#define N 80
+#define N 30
 #define X 0
 #define Y 1
 
 #define SQUARE(x) ((x)*(x))
 #define REF(g, i, j) g[(i)*N + (j)]
 
-
-/* Not quite right, but reduced error from 
- * 0.0195906903497
- * to
- * 0.0107748007693
- * with "linear compensation" */
-double taxi_approx2_delta(double x, double y){
-  static const double tans[3]  = { 0.000000000000000, TAN_PI_8, 1.0 };
-  static const double cache[3] = { 1.0, 1.08239220029239, 1.41421356237309 };
-  static const double divs[2] = { 2.41421356237309, 1.70710678118655 };
-
-  /* Max error gotten from running without parabola compensating */
-  //double max_err = 0.0195906903497;
-
+// Error without delta: 0.0000753037392
+// Error with delta:    0.0000301140586
+double taxi_approx32_delta(double x, double y){
+  static const double tans[33] = { 0.000000000000000,0.024548622108925,0.049126849769467,0.073764431522449,0.098491403357164,0.123338236136739,0.148335987538347,0.173516460137856,0.198912367379658,0.224557509317129,0.250486960191305,0.276737270140414,0.303346683607342,0.330355377344334,0.357805721314524,0.385742566271121,0.414213562373095,0.443269513890864,0.472964775891320,0.503357699799294,0.534511135950792,0.566493002730344,0.599376933681924,0.633243016177569,0.668178637919299,0.704279460865044,0.741650546272035,0.780407659653944,0.820678790828660,0.862605932256740,0.906347169019147,0.952079146700925,1.000000000000000};
+  static const double cache[33] = {1.00000000000000,1.00030127204130,1.00120599647039,1.00271690489282,1.00483857237631,1.00757745136209,1.01094191979509,1.01494234414511,1.01959115820832,1.02490295881645,1.03089461984525,1.03758542621067,1.04499722987938,1.05315463030854,1.06208518217957,1.07181963381598,1.08239220029239,1.09384087597102,1.10620779206889,1.11953962589416,1.13388806963272,1.14931036806532,1.16586993641227,1.18363707171483,1.20268977387009,1.22311469576502,1.24500824607133,1.26847787337681,1.29364356671998,1.32063961562741,1.34961668291001,1.38074425640042,1.41421356237309};
+  static const double divs[33] = {40.7354838720833,40.6864161977559,40.5883990574263,40.4416685829710,40.2465782609548,40.0035980810516,39.7133134037971,39.3764235504049,38.9937401180398,38.5661850246095,38.0947882877836,37.5806855435902,37.0251153105707,36.4294160060783,35.7950227219147,35.1234637670676,34.4163569858810,33.6754058605261,32.9023954071634,32.0991878756827,31.2677182633801,30.4099896533800,29.5280683890315,28.6240790959081,27.7001995633968,26.7586554982137,25.8017151624817,24.8316839092870,23.8508986288838,22.8617221189191,21.8665373922468,20.8677419360416};
   int i = 1;
   double tmp;
-  double c;
   /* Make x > y true */
   if(y > x){
     tmp = x;
     x = y;
     y = tmp;
   }
-
-  double delta_from_high;
-  double delta_from_low;
-  double lin_delta;
-
   /* This search is linear, could be made binary */
-  for(; i < 3; i++){
+  for(; i < 33; i++){
     if(y <= tans[i]*x){
       break;
     }
   }
-  delta_from_high = tans[i]*x - y;
-  delta_from_low  = y - tans[i-1]*x;
-  lin_delta = fabs(delta_from_high - delta_from_low);
 
-  c  = divs[i-1]*(tans[i-1]*x - y);
-  double max_err = 0.0195906903497;
-  double q = max_err*2.5;
-
-  return((1.0-max_err)*((x + c)*cache[i-1] - c*cache[i] + q*lin_delta));
-}
-
-double taxi_delta(double x, double y){
-  static const double tans[3]  = { 0.000000000000000, TAN_PI_8, 1.0 };
-  double tmp;
-  if(y > x){
-    tmp = x;
-    x = y;
-    y = tmp;
-  }
-
-  double delta_from_high[3];
-  double delta_from_low[3];
+  double delta_from_high = tans[i]*x - y;
+  double delta_from_low  = y - tans[i-1]*x;
   double lin_delta;
-  int i = 1;
-  for(; i < 3; i++){
-    if(y <= tans[i]*x){
-      break;
-    }
+  /* These two ifs could be combined to sometimes save an assignment.
+   * Would look less clear though. */
+  if(delta_from_high < delta_from_low){
+    lin_delta = delta_from_high;
+  }else{
+    lin_delta = delta_from_low;
   }
-  delta_from_high[i] = tans[i]*x - y;
-  delta_from_low[i]  = y - tans[i-1]*x;
-
-  if(delta_from_high[i] < 0.0){
-    printf("delta_from_high is negative!\n");
-    //delta_from_high[i] = 0.0;
-    //delta_from_low[i] *= 0.9;
+  if(lin_delta > 0.3*x*(tans[i] - tans[i-1])){
+    lin_delta = 0.3*x*(tans[i] - tans[i-1]);
   }
 
-  if(delta_from_low[i] < 0.0){
-    printf("delta_from_low is negative!\n");
-    //delta_from_low[i] = 0.0;
-    //delta_from_low[i] *= 0.9;
-  }
-
-  /* lin_delta fabs... */
-  if(delta_from_high[i] > delta_from_low[i]){
-    lin_delta = -delta_from_high[i] + delta_from_low[i];
-  } else {
-    lin_delta = - delta_from_low[i] + delta_from_high[i];
-  }
-
-  return(sqrt(x*x + y*y) - lin_delta);
+  double c  = divs[i-1]*(tans[i-1]*x - y);
+  // The value 0.0000301145121 is the lowest error I managed to get
+  // while keeping error still positive. I tuned that with the value 0.00613
+  return((1.0 - 0.5*0.0000301145121)*((x + c)*cache[i-1] - c*cache[i] - 0.00613*lin_delta));
 }
 
 double delta_pt(double x, double y){
@@ -113,35 +66,37 @@ double delta_pt(double x, double y){
     y = tmp;
   }
 
-  double delta_from_high;
-  double delta_from_low;
-  double lin_delta;
   int i = 1;
   for(; i < 3; i++){
     if(y <= tans[i]*x){
       break;
     }
   }
+
+  double delta_from_high;
+  double delta_from_low;
+  double lin_delta;
   delta_from_high = tans[i]*x - y;
   delta_from_low  = y - tans[i-1]*x;
 
-  if(delta_from_high < 0.0){
-    printf("delta_from_high is negative!\n");
-    //delta_from_high = 0.0;
-    //delta_from_low *= 0.9;
-  }
-
-  if(delta_from_low < 0.0){
-    printf("delta_from_low is negative!\n");
-    //delta_from_low = 0.0;
-    //delta_from_low *= 0.9;
-  }
+  /* A min function using if.
+   * Makes a triangular shape with as many
+   * linearly growing arms like r=sqrt(x*x+y*y
+   * Angles covered by tans have zero delta, and
+   * triangularly shaped delta values between them. */
   if(delta_from_high < delta_from_low)
     lin_delta = delta_from_high;
   else
     lin_delta = delta_from_low;
 
-  return(fabs(lin_delta));
+  /* Give triangles flat top to more closely approximate sine-form
+     This takes error down from 0.0096 to 0.0069
+     The number 0.3 is just guessed with a little trial and error */
+  if(lin_delta > 0.3*x*(tans[i] - tans[i-1]))
+    lin_delta = 0.3*x*(tans[i] - tans[i-1]);
+
+  // The value 0.1323 just worked well with the three lines, taxi_approx3 and the 0.3 roof...
+  return(0.1323*lin_delta);
 }
 
 // Error amplitide: 0.00753 %
@@ -382,7 +337,7 @@ double taxi_approx1(double x, double y){
 void taxi_norm(double l[N*N], double g[N*N][2]){
   for(int i = 0; i < N; i++){
     for(int j = 0; j < N; j++){
-      REF(l, i, j) = taxi_approx2(REF(g,i,j)[X], REF(g,i,j)[Y]);
+      REF(l, i, j) = taxi_approx32_delta(REF(g,i,j)[X], REF(g,i,j)[Y]);
     }
   }
 }
@@ -526,12 +481,12 @@ int main(int argc, char** argv){
   double  pts_grid[N*N][2];
   double         l[N*N];
   double    taxi_l[N*N];
-  double  compensl[N*N];
-  double  compensr[N*N];
-  double compenspr[N*N];
+  //double  compensl[N*N];
+  //double  compensr[N*N];
+  //double compenspr[N*N];
   double         r[N*N];
   double        pr[N*N];
-  double    deltas[N*N];
+  //double    deltas[N*N];
 
   /* Initialize the grid of points */
   init_pts_grid(pts_grid);
@@ -544,28 +499,31 @@ int main(int argc, char** argv){
 
   /* Calculate the compensating deltas.
    * Should have similar shape as r */
-  calculate_deltas(deltas, pts_grid);
+  //calculate_deltas(deltas, pts_grid);
 
   /* Try to compensate for error */
-  for(int i = 0; i < N; i++){
-    for(int j = 0; j < N; j++){
-      REF(deltas, i, j)   *= 0.10065;
-      REF(compensl, i, j)  = REF(taxi_l, i, j);
-      REF(compensl, i, j) -= REF(deltas, i, j);
-    }
-  }
-  residuals(compensr, compensl, l);
+  //for(int i = 0; i < N; i++){
+  //  for(int j = 0; j < N; j++){
+  //    // Best match without roofs
+  //    //REF(deltas, i, j)   *= 0.10065;
+  //    // Best match with roofs
+  //    REF(deltas, i, j)   *= 0.1323;
+  //    REF(compensl, i, j)  = REF(taxi_l, i, j);
+  //    REF(compensl, i, j) -= REF(deltas, i, j);
+  //  }
+  //}
+  //residuals(compensr, compensl, l);
 
   /* Calculate the absolute errors in the approxiamtions */
   residuals(r, taxi_l, l);
 
-  plot_grid(r);
-  plot_grid(compensr);
-  plot_grid(deltas);
+  //plot_grid(r);
+  //plot_grid(compensr);
+  //plot_grid(deltas);
 
   /* Calculate relative errors in approximations */
   rel_err(pr, r, l);
-  rel_err(compenspr, compensr, l);
+  //rel_err(compenspr, compensr, l);
 
   /* Print the results */
   //printf("The points\n");
@@ -579,19 +537,19 @@ int main(int argc, char** argv){
   //printf("relative errors (taxinorm - exactnorm):\n");
   //print_grid(pr);
   //save_grid(pr, "relative_errors.data");
-  //plot_grid(pr);
-  //printf("Maximum relative error:\n");
-  //printf("% 8.13f\n", grid_max(pr));
-  //printf("Minimum relative error:\n");
-  //printf("% 8.13f\n", grid_min(pr));
+  plot_grid(pr);
+  printf("Maximum relative error:\n");
+  printf("% 8.13f\n", grid_max(pr));
+  printf("Minimum relative error:\n");
+  printf("% 8.13f\n", grid_min(pr));
   printf("Total relative error:\n");
-  printf("pr:\n");
+  //printf("pr:\n");
   printf("% 8.13f\n", grid_max(pr) - grid_min(pr));
-  printf("compenspr:\n");
-  printf("% 8.13f\n", grid_max(compenspr) - grid_min(compenspr));
-  printf("Maximum compenspr relative error:\n");
-  printf("% 8.13f\n", grid_max(compenspr));
-  printf("Minimum compenspr relative error:\n");
-  printf("% 8.13f\n", grid_min(compenspr));
+  //printf("compenspr:\n");
+  //printf("% 8.13f\n", grid_max(compenspr) - grid_min(compenspr));
+  //printf("Maximum compenspr relative error:\n");
+  //printf("% 8.13f\n", grid_max(compenspr));
+  //printf("Minimum compenspr relative error:\n");
+  //printf("% 8.13f\n", grid_min(compenspr));
   return 0;
 }
