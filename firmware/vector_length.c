@@ -136,10 +136,12 @@ double delta_pt(double x, double y){
     //delta_from_low = 0.0;
     //delta_from_low *= 0.9;
   }
-  lin_delta = delta_from_high*delta_from_low;
+  if(delta_from_high < delta_from_low)
+    lin_delta = delta_from_high;
+  else
+    lin_delta = delta_from_low;
 
-
-  return(sqrt(fabs(lin_delta)));
+  return(fabs(lin_delta));
 }
 
 // Error amplitide: 0.00753 %
@@ -547,7 +549,7 @@ int main(int argc, char** argv){
   /* Try to compensate for error */
   for(int i = 0; i < N; i++){
     for(int j = 0; j < N; j++){
-      REF(deltas, i, j)   *= 0.075;
+      REF(deltas, i, j)   *= 0.10065;
       REF(compensl, i, j)  = REF(taxi_l, i, j);
       REF(compensl, i, j) -= REF(deltas, i, j);
     }
