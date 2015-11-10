@@ -40,8 +40,8 @@ double taxi_approx2_delta(double x, double y){
     y = tmp;
   }
 
-  double delta_from_high[3];
-  double delta_from_low[3];
+  double delta_from_high;
+  double delta_from_low;
   double lin_delta;
 
   /* This search is linear, could be made binary */
@@ -50,9 +50,9 @@ double taxi_approx2_delta(double x, double y){
       break;
     }
   }
-  delta_from_high[i] = tans[i]*x - y;
-  delta_from_low[i]  = y - tans[i-1]*x;
-  lin_delta = fabs(delta_from_high[i] - delta_from_low[i]);
+  delta_from_high = tans[i]*x - y;
+  delta_from_low  = y - tans[i-1]*x;
+  lin_delta = fabs(delta_from_high - delta_from_low);
 
   c  = divs[i-1]*(tans[i-1]*x - y);
   double max_err = 0.0195906903497;
@@ -100,10 +100,46 @@ double taxi_delta(double x, double y){
   } else {
     lin_delta = - delta_from_low[i] + delta_from_high[i];
   }
-  double max_err = 0.0195906903497;
-  double q = max_err*2.0;
 
-  return((1.0-max_err)*(sqrt(x*x + y*y) - q*lin_delta));
+  return(sqrt(x*x + y*y) - lin_delta);
+}
+
+double delta_pt(double x, double y){
+  static const double tans[3]  = { 0.000000000000000, TAN_PI_8, 1.0 };
+  double tmp;
+  if(y > x){
+    tmp = x;
+    x = y;
+    y = tmp;
+  }
+
+  double delta_from_high;
+  double delta_from_low;
+  double lin_delta;
+  int i = 1;
+  for(; i < 3; i++){
+    if(y <= tans[i]*x){
+      break;
+    }
+  }
+  delta_from_high = tans[i]*x - y;
+  delta_from_low  = y - tans[i-1]*x;
+
+  if(delta_from_high < 0.0){
+    printf("delta_from_high is negative!\n");
+    //delta_from_high = 0.0;
+    //delta_from_low *= 0.9;
+  }
+
+  if(delta_from_low < 0.0){
+    printf("delta_from_low is negative!\n");
+    //delta_from_low = 0.0;
+    //delta_from_low *= 0.9;
+  }
+  lin_delta = delta_from_high*delta_from_low;
+
+
+  return(sqrt(fabs(lin_delta)));
 }
 
 // Error amplitide: 0.00753 %
@@ -344,7 +380,15 @@ double taxi_approx1(double x, double y){
 void taxi_norm(double l[N*N], double g[N*N][2]){
   for(int i = 0; i < N; i++){
     for(int j = 0; j < N; j++){
-      REF(l, i, j) = taxi_approx2_delta(REF(g,i,j)[X], REF(g,i,j)[Y]);
+      REF(l, i, j) = taxi_approx2(REF(g,i,j)[X], REF(g,i,j)[Y]);
+    }
+  }
+}
+
+void calculate_deltas(double d[N*N], double g[N*N][2]){
+  for(int i = 0; i < N; i++){
+    for(int j = 0; j < N; j++){
+      REF(d, i, j) = delta_pt(REF(g,i,j)[X], REF(g,i,j)[Y]);
     }
   }
 }
@@ -443,24 +487,22 @@ void plot_grid(double g[N*N]){
   /* The Gnuplot script goes here */
   char* command = 
     "set term wxt 0 size 1200, 900 raise; "
-    /* If a 3D plot gets slow, use map:
-       "set pm3d map; "
-    */
+    /* If a 3D plot gets slow, use map: */
+    // "set pm3d map; "
 
     /* Plot a surface: */
-      "splot '-' matrix with pm3d notitle\n";
+    "splot '-' matrix with pm3d notitle\n";
 
-    /* For saving output as svg files:
-       "set term svg background 'white'; "
-       "set output '/tmp/b.svg'; "
-    */
-    /* Draw the nice frog leg 
-      "set contour base; "
-      "unset surface; "
-      "unset tics; "
-      "set view map; "
-      "splot '-' matrix with lines notitle\n";
-    */
+    /* For saving output as svg files: */
+    // "set term svg background 'white'; "
+    // "set output '/tmp/b.svg'; "
+
+    /* Draw contour lines  */
+    //"set contour base; "
+    //"unset surface; "
+    //"unset tics; "
+    //"set view map; "
+    //"splot '-' matrix with lines notitle\n";
 
   printf("info: invoking gnuplot\n");
   fflush(stdout);
@@ -479,11 +521,15 @@ void plot_grid(double g[N*N]){
 }
 
 int main(int argc, char** argv){
-  double pts_grid[N*N][2];
-  double        l[N*N];
-  double   taxi_l[N*N];
-  double        r[N*N];
-  double       pr[N*N];
+  double  pts_grid[N*N][2];
+  double         l[N*N];
+  double    taxi_l[N*N];
+  double  compensl[N*N];
+  double  compensr[N*N];
+  double compenspr[N*N];
+  double         r[N*N];
+  double        pr[N*N];
+  double    deltas[N*N];
 
   /* Initialize the grid of points */
   init_pts_grid(pts_grid);
@@ -494,11 +540,30 @@ int main(int argc, char** argv){
   /* Calculate the approximated L2-norms */
   taxi_norm(taxi_l, pts_grid);
 
+  /* Calculate the compensating deltas.
+   * Should have similar shape as r */
+  calculate_deltas(deltas, pts_grid);
+
+  /* Try to compensate for error */
+  for(int i = 0; i < N; i++){
+    for(int j = 0; j < N; j++){
+      REF(deltas, i, j)   *= 0.075;
+      REF(compensl, i, j)  = REF(taxi_l, i, j);
+      REF(compensl, i, j) -= REF(deltas, i, j);
+    }
+  }
+  residuals(compensr, compensl, l);
+
   /* Calculate the absolute errors in the approxiamtions */
   residuals(r, taxi_l, l);
 
+  plot_grid(r);
+  plot_grid(compensr);
+  plot_grid(deltas);
+
   /* Calculate relative errors in approximations */
   rel_err(pr, r, l);
+  rel_err(compenspr, compensr, l);
 
   /* Print the results */
   //printf("The points\n");
@@ -512,12 +577,19 @@ int main(int argc, char** argv){
   //printf("relative errors (taxinorm - exactnorm):\n");
   //print_grid(pr);
   //save_grid(pr, "relative_errors.data");
-  plot_grid(pr);
-  printf("Maximum relative error:\n");
-  printf("% 8.13f\n", grid_max(pr));
-  printf("Minimum relative error:\n");
-  printf("% 8.13f\n", grid_min(pr));
+  //plot_grid(pr);
+  //printf("Maximum relative error:\n");
+  //printf("% 8.13f\n", grid_max(pr));
+  //printf("Minimum relative error:\n");
+  //printf("% 8.13f\n", grid_min(pr));
   printf("Total relative error:\n");
+  printf("pr:\n");
   printf("% 8.13f\n", grid_max(pr) - grid_min(pr));
+  printf("compenspr:\n");
+  printf("% 8.13f\n", grid_max(compenspr) - grid_min(compenspr));
+  printf("Maximum compenspr relative error:\n");
+  printf("% 8.13f\n", grid_max(compenspr));
+  printf("Minimum compenspr relative error:\n");
+  printf("% 8.13f\n", grid_min(compenspr));
   return 0;
 }
