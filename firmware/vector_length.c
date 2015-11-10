@@ -2,16 +2,109 @@
 #include <math.h>
 
 
+// defines for taxi_approx3
 #define TAN_PI_6  0.577350269189626
-#define TAN_PI_8  0.414213562373095
 #define TAN_PI_12 0.267949192431123
 
-#define N 100
+// defines for taxi_approx2
+#define TAN_PI_8  0.414213562373095
+
+#define N 80
 #define X 0
 #define Y 1
 
 #define SQUARE(x) ((x)*(x))
 #define REF(g, i, j) g[(i)*N + (j)]
+
+
+/* Not quite right, but reduced error from 
+ * 0.0195906903497
+ * to
+ * 0.0107748007693
+ * with "linear compensation" */
+double taxi_approx2_delta(double x, double y){
+  static const double tans[3]  = { 0.000000000000000, TAN_PI_8, 1.0 };
+  static const double cache[3] = { 1.0, 1.08239220029239, 1.41421356237309 };
+  static const double divs[2] = { 2.41421356237309, 1.70710678118655 };
+
+  /* Max error gotten from running without parabola compensating */
+  //double max_err = 0.0195906903497;
+
+  int i = 1;
+  double tmp;
+  double c;
+  /* Make x > y true */
+  if(y > x){
+    tmp = x;
+    x = y;
+    y = tmp;
+  }
+
+  double delta_from_high[3];
+  double delta_from_low[3];
+  double lin_delta;
+
+  /* This search is linear, could be made binary */
+  for(; i < 3; i++){
+    if(y <= tans[i]*x){
+      break;
+    }
+  }
+  delta_from_high[i] = tans[i]*x - y;
+  delta_from_low[i]  = y - tans[i-1]*x;
+  lin_delta = fabs(delta_from_high[i] - delta_from_low[i]);
+
+  c  = divs[i-1]*(tans[i-1]*x - y);
+  double max_err = 0.0195906903497;
+  double q = max_err*2.5;
+
+  return((1.0-max_err)*((x + c)*cache[i-1] - c*cache[i] + q*lin_delta));
+}
+
+double taxi_delta(double x, double y){
+  static const double tans[3]  = { 0.000000000000000, TAN_PI_8, 1.0 };
+  double tmp;
+  if(y > x){
+    tmp = x;
+    x = y;
+    y = tmp;
+  }
+
+  double delta_from_high[3];
+  double delta_from_low[3];
+  double lin_delta;
+  int i = 1;
+  for(; i < 3; i++){
+    if(y <= tans[i]*x){
+      break;
+    }
+  }
+  delta_from_high[i] = tans[i]*x - y;
+  delta_from_low[i]  = y - tans[i-1]*x;
+
+  if(delta_from_high[i] < 0.0){
+    printf("delta_from_high is negative!\n");
+    //delta_from_high[i] = 0.0;
+    //delta_from_low[i] *= 0.9;
+  }
+
+  if(delta_from_low[i] < 0.0){
+    printf("delta_from_low is negative!\n");
+    //delta_from_low[i] = 0.0;
+    //delta_from_low[i] *= 0.9;
+  }
+
+  /* lin_delta fabs... */
+  if(delta_from_high[i] > delta_from_low[i]){
+    lin_delta = -delta_from_high[i] + delta_from_low[i];
+  } else {
+    lin_delta = - delta_from_low[i] + delta_from_high[i];
+  }
+  double max_err = 0.0195906903497;
+  double q = max_err*2.0;
+
+  return((1.0-max_err)*(sqrt(x*x + y*y) - q*lin_delta));
+}
 
 // Error amplitide: 0.00753 %
 // Max error: 0.00376491230 %
@@ -179,9 +272,12 @@ double taxi_approx3(double x, double y){
   return res;
 }
 
+
+
 // Error: 1.96 %
 double taxi_approx2(double x, double y){
-  float tmp, f0, f1, f2;
+  double tmp, f0, f1, f2;
+
   if(y > x){
     tmp = x;
     x = y;
@@ -248,7 +344,7 @@ double taxi_approx1(double x, double y){
 void taxi_norm(double l[N*N], double g[N*N][2]){
   for(int i = 0; i < N; i++){
     for(int j = 0; j < N; j++){
-      REF(l, i, j) = taxi_approx32(REF(g,i,j)[X], REF(g,i,j)[Y]);
+      REF(l, i, j) = taxi_approx2_delta(REF(g,i,j)[X], REF(g,i,j)[Y]);
     }
   }
 }
@@ -349,7 +445,8 @@ void plot_grid(double g[N*N]){
     "set term wxt 0 size 1200, 900 raise; "
     /* If a 3D plot gets slow, use map:
        "set pm3d map; "
-     */
+    */
+
     /* Plot a surface: */
       "splot '-' matrix with pm3d notitle\n";
 
@@ -420,5 +517,7 @@ int main(int argc, char** argv){
   printf("% 8.13f\n", grid_max(pr));
   printf("Minimum relative error:\n");
   printf("% 8.13f\n", grid_min(pr));
+  printf("Total relative error:\n");
+  printf("% 8.13f\n", grid_max(pr) - grid_min(pr));
   return 0;
 }
