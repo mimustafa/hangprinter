@@ -52,8 +52,9 @@ double taxi_approx32_delta(double x, double y){
   }
 
   double c  = divs[i-1]*(tans[i-1]*x - y);
-  // The value 0.0000301145121 is the lowest error I managed to get
-  // while keeping error still positive. I tuned that with the value 0.00613
+  /* The value 0.0000301145121 is the lowest error I managed to get
+   * while keeping all error still positive (error grows faster after it gets a negative part).
+   * I tuned that with the value 0.00613 */
   return((1.0 - 0.5*0.0000301145121)*((x + c)*cache[i-1] - c*cache[i] - 0.00613*lin_delta));
 }
 
@@ -351,7 +352,7 @@ void calculate_deltas(double d[N*N], double g[N*N][2]){
 }
 
 int init_pts_grid(double pts_grid[N*N][2]){
-  double inc = (1.0/((double)N - 1.0));
+  double inc = (10.0/((double)N - 1.0));
   for(int i = 0; i < N; i++){
     for(int j = 0; j < N; j++){
       REF(pts_grid, i, j)[X] = inc*(double)j;
