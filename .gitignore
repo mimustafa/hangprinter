@@ -8,3 +8,7 @@ drive_attic.scad
 fairlead_attic.scad
 Hangprinter.scad
 firmware/Marlin/Marlin/octave-workspace
+firmware/scratch
+DRAWING-V6-175-SINK.png
+firmware/test_binary_search.c
+
