@@ -21,9 +21,6 @@ int main(int arcg, char** argv){
     if (a <= tans[mid]){
       last = mid;
       printf("Set last to %d\n", last);
-    }else if(first == mid){
-        printf("Detected first == mid. Breaking\n");
-        break;
     }else{
       first = mid;
       printf("Set first to %d\n", first);
@@ -35,7 +32,7 @@ int main(int arcg, char** argv){
     printf("last = %d\n", last);
     printf("The check last != first returns %d\n", last != first);
     printf("\n");
-  } while(last != first);
+  } while(last - first != 1);
 
   printf("i = %d\n", mid+1);
 

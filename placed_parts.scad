@@ -192,7 +192,8 @@ module placed_extruder(){
 module placed_hotend(){
   translate([0,0,-81])
     rotate([0,0,Extruder_motor_twist])
-    reprappro_hotend();
+    //reprappro_hotend();
+    e3d_hotend();
 }
 //placed_hotend();
 
@@ -221,7 +222,7 @@ module placed_plates(){
 
 
 //color("green")
-placed_lines();
-placed_sandwich();
-bottom_plate();
-placed_abc_motors();
+//placed_lines();
+//placed_sandwich();
+//bottom_plate();
+//placed_abc_motors();

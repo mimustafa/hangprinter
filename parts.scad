@@ -540,11 +540,11 @@ module parted_top_plate_piece1(){
 //parted_top_plate_piece1();
 //translate([-139/2,-17,0])
 //%cube([139,139,20]);
-parted_top_plate_piece1();
-translate([0,-25,0,])
-parted_top_plate_piece1();
-translate([0,2*-25,0,])
-parted_top_plate_piece1();
+//parted_top_plate_piece1();
+//translate([0,-25,0,])
+//parted_top_plate_piece1();
+//translate([0,2*-25,0,])
+//parted_top_plate_piece1();
 
 // Fits on a Huxley
 module parted_top_plate_piece2(){
