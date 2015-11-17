@@ -9,12 +9,75 @@
 // defines for taxi_approx2
 #define TAN_PI_8  0.414213562373095
 
-#define N 30
+#define N 200
 #define X 0
 #define Y 1
 
 #define SQUARE(x) ((x)*(x))
 #define REF(g, i, j) g[(i)*N + (j)]
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+
+// Error without delta: 0.0000188250658
+// Error with delta:    0.0000075845663
+// That is 7.6e-6
+double taxi_approx64_delta(double x, double y){
+  static const double tans[65] = {0.0, 0.01227246237956628, 0.02454862210892544, 0.03683218099484564, 0.04912684976946725, 0.06143635258159376, 0.07376443152244928, 0.08611485119762791, 0.09849140335716425, 0.110897911595913, 0.1233382361367387, 0.1358162787093877, 0.1483359875383474, 0.1609013624534892, 0.1735164601378558, 0.1861853995275837, 0.198912367379658, 0.2117016240239833, 0.2245575093171293, 0.2374844488160702, 0.2504869601913055, 0.263569659899918, 0.2767372701404143, 0.2899946261126061, 0.3033466836073424, 0.3167985269526038, 0.330355377344334, 0.3440226015924263, 0.3578057213145241, 0.3717104226127435, 0.3857425662711212, 0.3999081985145372, 0.414213562373095, 0.4286651096994995, 0.4432695138908643, 0.4580336833706724, 0.4729647758913199, 0.4880702137228629, 0.5033576997992942, 0.5188352348999757, 0.5345111359507916, 0.5503940555372639, 0.566493002730344, 0.5828173653349761, 0.5993769336819237, 0.616181926094866, 0.6332430161775691, 0.6505713620801533, 0.6681786379192989, 0.6860770675448629, 0.7042794608650442, 0.7227992529642059, 0.7416505462720354, 0.7608481560702512, 0.7804076596539435, 0.8003454494993202, 0.8206787908286602, 0.8414258840072547, 0.8626059322567399, 0.8842392152253498, 0.906347169019147, 0.9289524733703675, 0.9520791467009252, 0.9757526499323765, 1.0};
+  static const double cache[65] = {1.0, 1.000075303831095, 1.000301272041302, 1.000678074885643, 1.001205996470393, 1.001885435276175, 1.002716904892817, 1.003701034968476, 1.004838572376311, 1.006130382602739, 1.007577451362089, 1.009180886443291, 1.010941919795087, 1.012861909857108, 1.014942344145111, 1.017184842099628, 1.019591158208318, 1.022163185413362, 1.024902958816449, 1.027812659695079, 1.030894619845249, 1.034151326266982, 1.037585426210666, 1.041199732603783, 1.044997229879378, 1.048981080229448, 1.05315463030854, 1.057521418414975, 1.062085182179568, 1.066849866794267, 1.071819633815984, 1.076998870583968, 1.082392200292394, 1.088004492763556, 1.093840875971018, 1.099906748366472, 1.106207792068889, 1.112749986979771, 1.11953962589416, 1.126583330683404, 1.133888069632715, 1.141461176024291, 1.14931036806532, 1.157443770269642, 1.165869936412268, 1.174597874187579, 1.183637071714833, 1.192997526048913, 1.202689773870091, 1.212724924544292, 1.22311469576502, 1.233871452010141, 1.24500824607133, 1.256538863941542, 1.268477873376807, 1.280840676483328, 1.29364356671998, 1.306903790750257, 1.320639615627412, 1.334870401852683, 1.349616682910011, 1.364900251952839, 1.380744256400425, 1.397173301294458, 1.414213562373095};
+  static const double divs[64] = {81.48324020654617, 81.45869897802326, 81.40963130369587, 81.33606674009614, 81.23804959976664, 81.11563892456739, 80.96890845011201, 80.79794656135175, 80.60285623933564, 80.38375499917866, 80.14077481927563, 79.87406206180044, 79.58377738454598, 79.27009564414729, 78.93320579075522, 78.57331075421982, 78.19062732185495, 77.78538600784995, 77.35783091441968, 76.90821958476502, 76.43682284793906, 75.94392465570959, 75.42982191151566, 74.89482429162886, 74.33925405860933, 73.76344586719139, 73.16774656269929, 72.55251497211843, 71.9181216879546, 71.26494884500138, 70.59338989015386, 69.90384934541692, 69.19674256423025, 68.47249548127898, 67.731544355924, 66.97433550941749, 66.20132505605467, 65.41297862842823, 64.60977109694736, 63.79218628379614, 62.96071667149342, 62.11586310624337, 61.25813449624342, 60.38804750513489, 59.50612624078624, 58.6129019395908, 57.70891264646706, 56.79470289076401, 55.87082335825257, 54.93783055941768, 53.99628649423485, 53.04675831364147, 52.08981797790978, 51.12604191211419, 50.15601065891911, 49.18030852888142, 48.19952324847784, 47.21424560608863, 46.22506909612424, 45.2325895615254, 44.2374048348529, 43.24011437817475, 42.241318921969, 41.24162010327328};
+  double tmp;
+  /* Make x > y true */
+  if(y > x){
+    tmp = x;
+    x = y;
+    y = tmp;
+  }
+  /* Binary search. Should maybe be unrolled explicitly in Arduino...
+   * Average number of binary-search-iterations is 6.0 (on the square testing grid)
+   * Average number of linear-search-iterations is 36.0 (also on the square testing grid)
+   * While form of binary search uses ca 8 operations per iteration?
+   * Unrollong loop saves ca four operations per iteration?
+   * (two assignments, one jmp and on stop criterion comparison)? */
+  int i   = 32;
+  int first = 0;
+  int last  = 64;
+
+  do{
+    if (y <= x*tans[i]){
+      last = i;
+    }else{
+      first = i;
+    }
+    i = (first + last) >> 1;
+  } while(last - first != 1);
+
+  /* With this number, it's possible to make the optimal linear combination
+   * of two cached values to get as close to sqrt(x*x + y*y) as possible */
+  double c  = divs[i]*(tans[i]*x - y);
+
+  /** The linear compensation of the error **
+   ** Don't really know if this is economical use of clock cycles 
+   ** compared to just adding more cached tans **/
+
+  /* These variables could probably be saved in on to save clock cycles */
+  double delta_from_high = (tans[i+1]*x - y);
+  double delta_from_low  = (y - tans[i]*x);
+  double lin_delta;
+  /* These two ifs could be combined to sometimes save an assignment.
+   * Would look less clear though. */
+  if(delta_from_high < delta_from_low){
+    lin_delta = delta_from_high;
+  }else{
+    lin_delta = delta_from_low;
+  }
+  /* Giving the compensation a flat top to closer resemble
+   * the curve that we're really trying to compensate for */
+  if(lin_delta > 0.3*x*(tans[i+1] - tans[i])){
+    lin_delta = 0.3*x*(tans[i+1] - tans[i]);
+  }
+
+  // 0.0030531 found by trial and error (largest value with no negative error)
+  return(((x + c)*cache[i] - c*cache[i+1] - 0.0030531*lin_delta));
+}
 
 // Error without delta: 0.0000753037392
 // Error with delta:    0.0000301140586
@@ -37,8 +100,8 @@ double taxi_approx32_delta(double x, double y){
     }
   }
 
-  double delta_from_high = tans[i]*x - y;
-  double delta_from_low  = y - tans[i-1]*x;
+  double delta_from_high = (tans[i]*x - y);
+  double delta_from_low  = (y - tans[i-1]*x);
   double lin_delta;
   /* These two ifs could be combined to sometimes save an assignment.
    * Would look less clear though. */
@@ -55,7 +118,8 @@ double taxi_approx32_delta(double x, double y){
   /* The value 0.0000301145121 is the lowest error I managed to get
    * while keeping all error still positive (error grows faster after it gets a negative part).
    * I tuned that with the value 0.00613 */
-  return((1.0 - 0.5*0.0000301145121)*((x + c)*cache[i-1] - c*cache[i] - 0.00613*lin_delta));
+  //return((1.0 - 0.5*0.0000301145121)*((x + c)*cache[i-1] - c*cache[i] - 0.00613*lin_delta));
+  return(((x + c)*cache[i-1] - c*cache[i] - 0.00613*lin_delta));
 }
 
 double delta_pt(double x, double y){
@@ -77,8 +141,10 @@ double delta_pt(double x, double y){
   double delta_from_high;
   double delta_from_low;
   double lin_delta;
-  delta_from_high = tans[i]*x - y;
-  delta_from_low  = y - tans[i-1]*x;
+  /* The factors 0.7 and 1.3 shifts triangle roofs away from pi/4-line.
+   * Not useful, but a bit funny. */
+  delta_from_high = (tans[i]*x - y)  *0.7;
+  delta_from_low  = (y - tans[i-1]*x)*1.3;
 
   /* A min function using if.
    * Makes a triangular shape with as many
@@ -338,7 +404,7 @@ double taxi_approx1(double x, double y){
 void taxi_norm(double l[N*N], double g[N*N][2]){
   for(int i = 0; i < N; i++){
     for(int j = 0; j < N; j++){
-      REF(l, i, j) = taxi_approx32_delta(REF(g,i,j)[X], REF(g,i,j)[Y]);
+      REF(l, i, j) = taxi_approx64_delta(REF(g,i,j)[X], REF(g,i,j)[Y]);
     }
   }
 }
@@ -352,7 +418,7 @@ void calculate_deltas(double d[N*N], double g[N*N][2]){
 }
 
 int init_pts_grid(double pts_grid[N*N][2]){
-  double inc = (10.0/((double)N - 1.0));
+  double inc = (1.0/((double)N - 1.0));
   for(int i = 0; i < N; i++){
     for(int j = 0; j < N; j++){
       REF(pts_grid, i, j)[X] = inc*(double)j;
@@ -444,23 +510,19 @@ void plot_grid(double g[N*N]){
 
   /* The Gnuplot script goes here */
   char* command = 
+    /** The 3D-plot version using pm3d: **/
     "set term wxt 0 size 1200, 900 raise; "
-    /* If a 3D plot gets slow, use map: */
-    // "set pm3d map; "
-
-    /* Plot a surface: */
+    // "set pm3d map; " /* If a 3D surface is too slow... */
     "splot '-' matrix with pm3d notitle\n";
 
-    /* For saving output as svg files: */
-    // "set term svg background 'white'; "
-    // "set output '/tmp/b.svg'; "
-
-    /* Draw contour lines  */
-    //"set contour base; "
+    /** For saving output as svg files: **/
+    //"set term svg background 'white'; "
+    //"set output '/tmp/b.svg'; "
+    //"set contour base; " /* Draw contour lines. Could use a nicer color palette... */
     //"unset surface; "
     //"unset tics; "
     //"set view map; "
-    //"splot '-' matrix with lines notitle\n";
+    //"splot '-' matrix with lines lw 0.3 notitle\n";
 
   printf("info: invoking gnuplot\n");
   fflush(stdout);
@@ -552,5 +614,7 @@ int main(int argc, char** argv){
   //printf("% 8.13f\n", grid_max(compenspr));
   //printf("Minimum compenspr relative error:\n");
   //printf("% 8.13f\n", grid_min(compenspr));
+  printf("total_while_iters per call: % 13.8f\n", total_while_iters/total_calls);
+  printf("total_for_iters per call: % 13.8f\n", total_for_iters/total_calls);
   return 0;
 }
