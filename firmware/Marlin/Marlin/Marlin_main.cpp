@@ -408,13 +408,11 @@ void setup(){
 #endif
   setup_homepin();
 // Hangprinter needs it motors always enabled
-#if defined(HANGPRINTER)
 enable_x();
 enable_y();
 enable_z();
 enable_e1();
 calculate_delta(current_position);
-#endif
 }
 
 void loop(){
@@ -1338,7 +1336,6 @@ void process_commands(){
           break;
 #ifdef DELTA
           case 665: // M665 set delta config
-#ifdef HANGPRINTER
           // Hangprinter config:
           // Q<Ax> W<Ay> E<Az> R<Bx> T<By> Y<Bz> U<Cx> I<Cy> O<Cz> P<Dz> S<segments_per_sec>
           if(code_seen('Q')) anchor_A_x = code_value();
@@ -1351,15 +1348,6 @@ void process_commands(){
           if(code_seen('I')) anchor_C_y = code_value();
           if(code_seen('O')) anchor_C_z = code_value();
           if(code_seen('P')) anchor_D_z = code_value();
-#else // M665 set delta configurations L<diagonal_rod> R<delta_radius> S<segments_per_sec>
-          if(code_seen('L')){
-            delta_diagonal_rod= code_value();
-          }
-          if(code_seen('R')){
-            delta_radius= code_value();
-          }
-          recalc_delta_settings(delta_radius, delta_diagonal_rod);
-#endif // HANGPRINTER
           if(code_seen('S')){
             delta_segments_per_second= code_value();
           }
@@ -1668,37 +1656,7 @@ void process_commands(){
     }
   }
 
-#if defined(DELTA) && !defined(HANGPRINTER) // Not available for HANGPRINTER
-  void recalc_delta_settings(float radius, float diagonal_rod){
-    delta_tower1_x= -SIN_60*radius; // front left tower
-    delta_tower1_y= -COS_60*radius;
-    delta_tower2_x=  SIN_60*radius; // front right tower
-    delta_tower2_y= -COS_60*radius;
-    delta_tower3_x= 0.0;                  // back middle tower
-    delta_tower3_y= radius;
-    delta_diagonal_rod_2= sq(diagonal_rod);
-  }
-#endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  void calculate_delta(float cartesian[3]) // array destination[3] filled with absolute coordinates is fed into this. tobben 20. may 2015
-  {
+  void calculate_delta(float cartesian[3]){ // array destination[3] filled with absolute coordinates is fed into this. tobben 20. may 2015
     // With current calculations delta will contain the new absolute coordinate
     // Geometry of hangprinter makes sq(anchor_ABC_Z - carthesian[Z_AXIS]) the smallest term in the sum.
     // Starting sum with smallest number givest smallest roundoff error.

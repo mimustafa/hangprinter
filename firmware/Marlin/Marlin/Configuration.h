@@ -9,7 +9,7 @@
 //===========================================================================
 /*
    Here are some standard links for getting your machine calibrated:
- * http://reprap.org/wiki/Calibration 
+ * http://reprap.org/wiki/Calibration
  * http://youtu.be/wAL9d7FgInk
  * http://calculator.josefprusa.cz
  * http://reprap.org/wiki/Triffid_Hunter%27s_Calibration_Guide
@@ -81,9 +81,6 @@
 //============================== Delta Settings =============================
 //===========================================================================
 // Enable DELTA kinematics and most of the default configuration for Deltas
-#define DELTA
-#define HANGPRINTER
-
 // Make delta curves from many straight lines (linear interpolation).
 // This is a trade-off between visible corners (not enough segments)
 // and processor overload (too many expensive sqrt calls).
@@ -135,7 +132,7 @@
 // 10 is 100k RS thermistor 198-961 (4.7k pullup)
 // 11 is 100k beta 3950 1% thermistor (4.7k pullup)
 // 12 is 100k 0603 SMD Vishay NTCS0603E3104FXT (4.7k pullup) (calibrated for Makibox hot bed)
-// 13 is 100k Hisens 3950  1% up to 300°C for hotend "Simple ONE " & "Hotend "All In ONE" 
+// 13 is 100k Hisens 3950  1% up to 300°C for hotend "Simple ONE " & "Hotend "All In ONE"
 // 20 is the PT100 circuit found in the Ultimainboard V2.x
 // 60 is 100k Maker's Tool Works Kapton Bed Thermistor beta=3950
 //
@@ -294,15 +291,15 @@
    The system will turn the heater on forever, burning up the filament and anything
    else around.
 
-   After the temperature reaches the target for the first time, this feature will 
-   start measuring for how long the current temperature stays below the target 
+   After the temperature reaches the target for the first time, this feature will
+   start measuring for how long the current temperature stays below the target
    minus _HYSTERESIS (set_temperature - THERMAL_RUNAWAY_PROTECTION_HYSTERESIS).
 
    If it stays longer than _PERIOD, it means the thermistor temperature
    cannot catch up with the target, so something *may be* wrong. Then, to be on the
    safe side, the system will he halt.
 
-   Bear in mind the count down will just start AFTER the first time the 
+   Bear in mind the count down will just start AFTER the first time the
    thermistor temperature is over the target, so you will have no problem if
    your extruder heater takes 2 minutes to hit the target on heating.
 
@@ -444,8 +441,8 @@ const bool Z_MAX_ENDSTOP_INVERTING = true; // set to true to invert the logic of
 // Sandwich pitch radius: 41.11
 // Motor gear pitch radius: 13.33
 //
-//  4*200 / ((34.25/41.11) * 2 * pi * 13.33) = 11.465 
-//  8*200 / ((34.25/41.11) * 2 * pi * 13.33) = 22.930 
+//  4*200 / ((34.25/41.11) * 2 * pi * 13.33) = 11.465
+//  8*200 / ((34.25/41.11) * 2 * pi * 13.33) = 22.930
 // 16*200 / ((34.25/41.11) * 2 * pi * 13.33) = 45.859
 //
 //  4*200 / ((33/42.22) * 2 * pi * 12.22) = 13.330
@@ -531,13 +528,6 @@ const bool Z_MAX_ENDSTOP_INVERTING = true; // set to true to invert the logic of
 // http://www.elefu.com/index.php?route=product/product&product_id=53
 // REMEMBER TO INSTALL LiquidCrystal_I2C.h in your ARDUINO library folder: https://github.com/kiyoshigawa/LiquidCrystal_I2C
 //#define RA_CONTROL_PANEL
-
-// Delta calibration menu
-// uncomment to add three points calibration menu option.
-// See http://minow.blogspot.com/index.html#4918805519571907051
-// If needed, adjust the X, Y, Z calibration coordinates
-// in ultralcd.cpp@lcd_delta_calibrate_menu()
-// #define DELTA_CALIBRATION_MENU
 
 // Increase the FAN pwm frequency. Removes the PWM noise but increases heating in the FET/Arduino
 //#define FAST_PWM_FAN

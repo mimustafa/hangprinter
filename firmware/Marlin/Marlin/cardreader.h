@@ -17,7 +17,7 @@ class CardReader
     //files auto[0-9].g on the sd card are performed in a row
     //this is to delay autostart and hence the initialisaiton of the sd card to some seconds after the normal init, so the device is available quick after a reset
 
-    void checkautostart(bool x); 
+    void checkautostart(bool x);
     void openFile(char* name,bool read,bool replace_current=true);
     void openLogFile(char* name);
     void removeFile(char* name);
@@ -50,7 +50,7 @@ class CardReader
   public:
     bool saving;
     bool logging;
-    bool sdprinting;  
+    bool sdprinting;
     bool cardOK;
     char filename[FILENAME_LENGTH];
     char longFilename[LONG_FILENAME_LENGTH];
@@ -83,7 +83,7 @@ extern CardReader card;
 #define IS_SD_PRINTING (card.sdprinting)
 
 #if (SDCARDDETECT > -1)
-# ifdef SDCARDDETECTINVERTED 
+# ifdef SDCARDDETECTINVERTED
 #  define IS_SD_INSERTED (READ(SDCARDDETECT)!=0)
 # else
 #  define IS_SD_INSERTED (READ(SDCARDDETECT)==0)

@@ -320,7 +320,6 @@ ISR(TIMER1_COMPA_vect)
   if (current_block != NULL) {
     // Set directions TO DO This should be done once during init of trapezoid. Endstops -> interrupt
     out_bits = current_block->direction_bits;
-#if defined(HANGPRINTER)
     // Pins on RAMPS are marked X, Y, Z, E0, E1
     // To avoid as much confusion as possible, we map
     // hardware names to software names like the following
@@ -360,30 +359,6 @@ ISR(TIMER1_COMPA_vect)
       WRITE(E1_DIR_PIN, !INVERT_E1_DIR);
       count_direction[C_AXIS]=1;
     }
-#else
-    if(out_bits & (1<<X_AXIS)){
-      WRITE(X_DIR_PIN, INVERT_X_DIR);
-      count_direction[X_AXIS]=-1;
-    }else{
-      WRITE(X_DIR_PIN, !INVERT_X_DIR);
-      count_direction[X_AXIS]=1;
-    }
-
-    if(out_bits & (1<<Y_AXIS)){
-      WRITE(Y_DIR_PIN, INVERT_Y_DIR);
-      count_direction[Y_AXIS]=-1;
-    }else{
-      WRITE(Y_DIR_PIN, !INVERT_Y_DIR);
-      count_direction[Y_AXIS]=1;
-    }
-    if ((out_bits & (1<<Z_AXIS))) {   // -direction
-      WRITE(Z_DIR_PIN,INVERT_Z_DIR);
-      count_direction[Z_AXIS]=-1;
-    }else{ // +direction
-      WRITE(Z_DIR_PIN,!INVERT_Z_DIR);
-      count_direction[Z_AXIS]=1;
-    }
-#endif
 
     if ((out_bits & (1<<E_AXIS)) != 0) {  // -direction
       REV_E_DIR();
@@ -447,7 +422,7 @@ ISR(TIMER1_COMPA_vect)
                          "nop\n\t");
         WRITE(Z_STEP_PIN, INVERT_Z_STEP_PIN);
       }
-      
+
       // D motor should be connected to E1_STEP_PIN
       counter_d += current_block->steps_d;
       if (counter_d > 0) {
@@ -775,136 +750,6 @@ void quickStop()
   ENABLE_STEPPER_DRIVER_INTERRUPT();
 }
 
-#ifdef BABYSTEPPING
-
-
-void babystep(const uint8_t axis,const bool direction)
-{
-  //MUST ONLY BE CALLED BY A ISR, it depends on that no other ISR interrupts this
-  //store initial pin states
-  switch(axis)
-  {
-    case X_AXIS:
-      {
-        enable_x();   
-        uint8_t old_x_dir_pin= READ(X_DIR_PIN);  //if dualzstepper, both point to same direction.
-
-        //setup new step
-        WRITE(X_DIR_PIN,(INVERT_X_DIR)^direction);
-
-        //perform step 
-        WRITE(X_STEP_PIN, !INVERT_X_STEP_PIN); 
-
-        _delay_us(1U); // wait 1 microsecond
-
-        WRITE(X_STEP_PIN, INVERT_X_STEP_PIN);
-
-        //get old pin state back.
-        WRITE(X_DIR_PIN,old_x_dir_pin);
-      }
-      break;
-    case Y_AXIS:
-      {
-        enable_y();   
-        uint8_t old_y_dir_pin= READ(Y_DIR_PIN);  //if dualzstepper, both point to same direction.
-
-        //setup new step
-        WRITE(Y_DIR_PIN,(INVERT_Y_DIR)^direction);
-#ifdef DUAL_Y_CARRIAGE
-        WRITE(Y2_DIR_PIN,(INVERT_Y_DIR)^direction);
-#endif
-
-        //perform step 
-        WRITE(Y_STEP_PIN, !INVERT_Y_STEP_PIN); 
-#ifdef DUAL_Y_CARRIAGE
-        WRITE(Y2_STEP_PIN, !INVERT_Y_STEP_PIN);
-#endif
-
-        _delay_us(1U); // wait 1 microsecond
-
-        WRITE(Y_STEP_PIN, INVERT_Y_STEP_PIN);
-#ifdef DUAL_Y_CARRIAGE
-        WRITE(Y2_STEP_PIN, INVERT_Y_STEP_PIN);
-#endif
-
-        //get old pin state back.
-        WRITE(Y_DIR_PIN,old_y_dir_pin);
-#ifdef DUAL_Y_CARRIAGE
-        WRITE(Y2_DIR_PIN,old_y_dir_pin);
-#endif
-
-      }
-      break;
-
-#ifndef DELTA
-    case Z_AXIS:
-      {
-        enable_z();
-        uint8_t old_z_dir_pin= READ(Z_DIR_PIN);  //if dualzstepper, both point to same direction.
-        //setup new step
-        WRITE(Z_DIR_PIN,(INVERT_Z_DIR)^direction^BABYSTEP_INVERT_Z);
-#ifdef Z_DUAL_STEPPER_DRIVERS
-        WRITE(Z2_DIR_PIN,(INVERT_Z_DIR)^direction^BABYSTEP_INVERT_Z);
-#endif
-        //perform step 
-        WRITE(Z_STEP_PIN, !INVERT_Z_STEP_PIN); 
-#ifdef Z_DUAL_STEPPER_DRIVERS
-        WRITE(Z2_STEP_PIN, !INVERT_Z_STEP_PIN);
-#endif
-
-        _delay_us(1U); // wait 1 microsecond
-
-        WRITE(Z_STEP_PIN, INVERT_Z_STEP_PIN);
-#ifdef Z_DUAL_STEPPER_DRIVERS
-        WRITE(Z2_STEP_PIN, INVERT_Z_STEP_PIN);
-#endif
-
-        //get old pin state back.
-        WRITE(Z_DIR_PIN,old_z_dir_pin);
-#ifdef Z_DUAL_STEPPER_DRIVERS
-        WRITE(Z2_DIR_PIN,old_z_dir_pin);
-#endif
-
-      }
-      break;
-#else //DELTA
-    case Z_AXIS:
-      {
-        enable_x();
-        enable_y();
-        enable_z();
-        uint8_t old_x_dir_pin= READ(X_DIR_PIN);  
-        uint8_t old_y_dir_pin= READ(Y_DIR_PIN);  
-        uint8_t old_z_dir_pin= READ(Z_DIR_PIN);  
-        //setup new step
-        WRITE(X_DIR_PIN,(INVERT_X_DIR)^direction^BABYSTEP_INVERT_Z);
-        WRITE(Y_DIR_PIN,(INVERT_Y_DIR)^direction^BABYSTEP_INVERT_Z);
-        WRITE(Z_DIR_PIN,(INVERT_Z_DIR)^direction^BABYSTEP_INVERT_Z);
-
-        //perform step 
-        WRITE(X_STEP_PIN, !INVERT_X_STEP_PIN); 
-        WRITE(Y_STEP_PIN, !INVERT_Y_STEP_PIN); 
-        WRITE(Z_STEP_PIN, !INVERT_Z_STEP_PIN); 
-
-        _delay_us(1U); // wait 1 microsecond
-
-        WRITE(X_STEP_PIN, INVERT_X_STEP_PIN); 
-        WRITE(Y_STEP_PIN, INVERT_Y_STEP_PIN); 
-        WRITE(Z_STEP_PIN, INVERT_Z_STEP_PIN);
-
-        //get old pin state back.
-        WRITE(X_DIR_PIN,old_x_dir_pin);
-        WRITE(Y_DIR_PIN,old_y_dir_pin);
-        WRITE(Z_DIR_PIN,old_z_dir_pin);
-
-      }
-      break;
-#endif
-
-    default:    break;
-  }
-}
-#endif //BABYSTEPPING
 
 void digitalPotWrite(int address, int value) // From Arduino DigitalPotControl example
 {
@@ -959,12 +804,12 @@ void microstep_init()
 
 #if defined(E1_MS1_PIN) && E1_MS1_PIN > -1
   pinMode(E1_MS1_PIN,OUTPUT);
-  pinMode(E1_MS2_PIN,OUTPUT); 
+  pinMode(E1_MS2_PIN,OUTPUT);
 #endif
 
 #if defined(X_MS1_PIN) && X_MS1_PIN > -1
   pinMode(X_MS1_PIN,OUTPUT);
-  pinMode(X_MS2_PIN,OUTPUT);  
+  pinMode(X_MS2_PIN,OUTPUT);
   pinMode(Y_MS1_PIN,OUTPUT);
   pinMode(Y_MS2_PIN,OUTPUT);
   pinMode(Z_MS1_PIN,OUTPUT);

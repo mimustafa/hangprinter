@@ -98,40 +98,25 @@ void Config_StoreSettings()  {
   EEPROM_WRITE_VAR(i, minsegmenttime);
   EEPROM_WRITE_VAR(i, max_xy_jerk);
   EEPROM_WRITE_VAR(i, max_z_jerk);
-#ifdef EXTRUDERS
   EEPROM_WRITE_VAR(i, max_e_jerk);
-#endif // ifdef EXTRUDERS
   EEPROM_WRITE_VAR(i, add_homing);
 
-#ifdef DELTA
   EEPROM_WRITE_VAR(i, endstop_adj);               // 3 floats
   EEPROM_WRITE_VAR(i, delta_segments_per_second); // 1 float
-#ifdef HANGPRINTER
-#else
-  EEPROM_WRITE_VAR(i, delta_radius);              // 1 float
-  EEPROM_WRITE_VAR(i, delta_diagonal_rod);        // 1 float
-#endif
-#else
-  dummy = 0.0f;
-  for (int q=6; q--;) EEPROM_WRITE_VAR(i, dummy);
-#endif
 
   int plaPreheatHotendTemp = PLA_PREHEAT_HOTEND_TEMP, plaPreheatHPBTemp = PLA_PREHEAT_HPB_TEMP, plaPreheatFanSpeed = PLA_PREHEAT_FAN_SPEED,
       absPreheatHotendTemp = ABS_PREHEAT_HOTEND_TEMP, absPreheatHPBTemp = ABS_PREHEAT_HPB_TEMP, absPreheatFanSpeed = ABS_PREHEAT_FAN_SPEED;
 
-#ifdef EXTRUDERS
   EEPROM_WRITE_VAR(i, plaPreheatHotendTemp);
   EEPROM_WRITE_VAR(i, plaPreheatHPBTemp);
   EEPROM_WRITE_VAR(i, plaPreheatFanSpeed);
   EEPROM_WRITE_VAR(i, absPreheatHotendTemp);
   EEPROM_WRITE_VAR(i, absPreheatHPBTemp);
   EEPROM_WRITE_VAR(i, absPreheatFanSpeed);
-#endif // ifdef EXTRUDERS
   EEPROM_WRITE_VAR(i, zprobe_zoffset);
 
   for (int e = 0; e < 4; e++) {
 
-#ifdef EXTRUDERS
 #ifdef PIDTEMP
     if (e < EXTRUDERS) {
       EEPROM_WRITE_VAR(i, PID_PARAM(Kp, e));
@@ -156,27 +141,20 @@ void Config_StoreSettings()  {
       }
 
     } // Extruders Loop
-#endif // ifdef EXTRUDERS
 
     int lcd_contrast = 32; // dummy
     EEPROM_WRITE_VAR(i, lcd_contrast);
 
-#ifdef SCARA
-    EEPROM_WRITE_VAR(i, axis_scaling); // 3 floats
-#else
     dummy = 1.0f;
     EEPROM_WRITE_VAR(i, dummy);
-#endif
 
     EEPROM_WRITE_VAR(i, volumetric_enabled);
 
-#ifdef EXTRUDERS
     // Save filament sizes
     for (int q = 0; q < 4; q++) {
       if (q < EXTRUDERS) dummy = filament_size[q];
       EEPROM_WRITE_VAR(i, dummy);
     }
-#endif // ifdef EXTRUDERS
 
     int storageSize = i;
 
@@ -219,37 +197,22 @@ void Config_StoreSettings()  {
       EEPROM_READ_VAR(i, minsegmenttime);
       EEPROM_READ_VAR(i, max_xy_jerk);
       EEPROM_READ_VAR(i, max_z_jerk);
-#ifdef EXTRUDERS
       EEPROM_READ_VAR(i, max_e_jerk);
-#endif // ifdef EXTRUDERS
       EEPROM_READ_VAR(i, add_homing);
-
-#ifdef DELTA
       EEPROM_READ_VAR(i, endstop_adj);                // 3 floats
-#ifdef HANGPRINTER
-#else
-      EEPROM_READ_VAR(i, delta_radius);               // 1 float
-      EEPROM_READ_VAR(i, delta_diagonal_rod);         // 1 float
       EEPROM_READ_VAR(i, delta_segments_per_second);  // 1 float
-#endif
-#else
-      for (int q=6; q--;) EEPROM_READ_VAR(i, dummy);
-#endif
 
       int plaPreheatHotendTemp, plaPreheatHPBTemp, plaPreheatFanSpeed,
           absPreheatHotendTemp, absPreheatHPBTemp, absPreheatFanSpeed;
 
-#ifdef EXTRUDERS
       EEPROM_READ_VAR(i, plaPreheatHotendTemp);
       EEPROM_READ_VAR(i, plaPreheatHPBTemp);
       EEPROM_READ_VAR(i, plaPreheatFanSpeed);
       EEPROM_READ_VAR(i, absPreheatHotendTemp);
       EEPROM_READ_VAR(i, absPreheatHPBTemp);
       EEPROM_READ_VAR(i, absPreheatFanSpeed);
-#endif // ifdef EXTRUDERS
       EEPROM_READ_VAR(i, zprobe_zoffset);
 
-#ifdef EXTRUDERS
 #ifdef PIDTEMP
       for (int e = 0; e < 4; e++) { // 4 = max extruders currently supported by Marlin
         EEPROM_READ_VAR(i, dummy);
@@ -272,20 +235,12 @@ void Config_StoreSettings()  {
       // 4 x 4 = 16 slots for PID parameters
       for (int q=16; q--;) EEPROM_READ_VAR(i, dummy);  // 4x Kp, Ki, Kd, Kc
 #endif // !PIDTEMP
-#endif // ifdef EXTRUDERS
 
       int lcd_contrast;
       EEPROM_READ_VAR(i, lcd_contrast);
-
-#ifdef SCARA
-      EEPROM_READ_VAR(i, axis_scaling);  // 3 floats
-#else
       EEPROM_READ_VAR(i, dummy);
-#endif
-
       EEPROM_READ_VAR(i, volumetric_enabled);
 
-#ifdef EXTRUDERS
       for (int q = 0; q < 4; q++) {
         EEPROM_READ_VAR(i, dummy);
         if (q < EXTRUDERS) filament_size[q] = dummy;
@@ -294,8 +249,6 @@ void Config_StoreSettings()  {
       calculate_volumetric_multipliers();
       // Call updatePID (similar to when we have processed M301)
       updatePID();
-#endif // ifdef EXTRUDERS
-
       // Report settings retrieved and length
       SERIAL_ECHO_START;
       SERIAL_ECHO(ver);
@@ -354,7 +307,6 @@ void Config_StoreSettings()  {
     updatePID();
 #endif // PIDTEMP
 
-#ifdef EXTRUDERS
     volumetric_enabled = false;
     filament_size[0] = DEFAULT_NOMINAL_FILAMENT_DIA;
 #if EXTRUDERS > 1
@@ -367,7 +319,6 @@ void Config_StoreSettings()  {
 #endif
 #endif
     calculate_volumetric_multipliers();
-#endif
 
     SERIAL_ECHO_START;
     SERIAL_ECHOLNPGM("Hardcoded Default Settings Loaded");
@@ -388,9 +339,7 @@ void Config_StoreSettings()  {
     SERIAL_ECHOPAIR(" B", axis_steps_per_unit[B_AXIS]);
     SERIAL_ECHOPAIR(" C", axis_steps_per_unit[C_AXIS]);
     SERIAL_ECHOPAIR(" D", axis_steps_per_unit[D_AXIS]);
-#ifdef EXTRUDERS
     SERIAL_ECHOPAIR(" E", axis_steps_per_unit[E_AXIS]);
-#endif // ifdef EXTRUDERS
     SERIAL_EOL;
 
     SERIAL_ECHO_START;
@@ -403,9 +352,7 @@ void Config_StoreSettings()  {
     SERIAL_ECHOPAIR(" B", max_feedrate[B_AXIS]);
     SERIAL_ECHOPAIR(" C", max_feedrate[C_AXIS]);
     SERIAL_ECHOPAIR(" D", max_feedrate[D_AXIS]);
-#ifdef EXTRUDERS
     SERIAL_ECHOPAIR(" E", max_feedrate[E_AXIS]);
-#endif // ifdef EXTRUDERS
     SERIAL_EOL;
 
     SERIAL_ECHO_START;
@@ -417,9 +364,7 @@ void Config_StoreSettings()  {
     SERIAL_ECHOPAIR(" B", max_acceleration_units_per_sq_second[B_AXIS] );
     SERIAL_ECHOPAIR(" C", max_acceleration_units_per_sq_second[C_AXIS] );
     SERIAL_ECHOPAIR(" D", max_acceleration_units_per_sq_second[D_AXIS] );
-#ifdef EXTRUDERS
     SERIAL_ECHOPAIR(" E", max_acceleration_units_per_sq_second[E_AXIS]);
-#endif // ifdef EXTRUDERS
     SERIAL_EOL;
     SERIAL_ECHO_START;
     if (!forReplay) {
@@ -440,9 +385,7 @@ void Config_StoreSettings()  {
     SERIAL_ECHOPAIR(" B", minsegmenttime );
     SERIAL_ECHOPAIR(" X", max_xy_jerk );
     SERIAL_ECHOPAIR(" Z", max_z_jerk);
-#ifdef EXTRUDERS
     SERIAL_ECHOPAIR(" E", max_e_jerk);
-#endif // ifdef EXTRUDERS
     SERIAL_EOL;
 
     SERIAL_ECHO_START;
@@ -456,7 +399,6 @@ void Config_StoreSettings()  {
     SERIAL_ECHOPAIR(" D", add_homing[D_AXIS] );
     SERIAL_EOL;
 
-#ifdef DELTA
     SERIAL_ECHO_START;
     if (!forReplay) {
       SERIAL_ECHOLNPGM("Endstop adjustement (mm):");
@@ -468,16 +410,8 @@ void Config_StoreSettings()  {
     SERIAL_ECHOPAIR(" D", endstop_adj[D_AXIS] );
     SERIAL_EOL;
     SERIAL_ECHO_START;
-#ifdef HANGPRINTER
-#else
-    SERIAL_ECHOLNPGM("Delta settings: L=delta_diagonal_rod, R=delta_radius, S=delta_segments_per_second");
-    SERIAL_ECHO_START;
-    SERIAL_ECHOPAIR("  M665 L", delta_diagonal_rod );
-    SERIAL_ECHOPAIR(" R", delta_radius );
-#endif
     SERIAL_ECHOPAIR(" S", delta_segments_per_second );
     SERIAL_EOL;
-#endif // DELTA
 
 #ifdef PIDTEMP
     SERIAL_ECHO_START;
