@@ -89,7 +89,7 @@ float taxi_approx64_delta(float x, float y){
   c  = divs[i]*(tans[i]*x - y);
 
   /** The linear compensation of the error **
-   ** Don't really know if this is economical use of clock cycles 
+   ** Don't really know if this is economical use of clock cycles
    ** compared to just adding more cached tans **/
 
   /* These variables could probably be saved in on to save clock cycles */
@@ -118,13 +118,27 @@ float taxi_approx64_delta(float x, float y){
 float sqrt2(float x){
   volatile register int val __asm__("r0");
 
-  __asm__ volatile("	call	__fp_splitA \n\t"
+  __asm__ volatile(
+                  "#define rB0 r18\n\t"
+                  "#define rB1 r19\n\t"
+                  "#define rB2 r20\n\t"
+                  "#define rB3 r21\n\t"
+                  "#define rA0 r22\n\t"
+                  "#define rA1 r23\n\t"
+                  "#define rA2 r24\n\t"
+                  "#define rA3 r25\n\t"
+                  "#define rBE r26\n\t"
+
+                   // r21 is return exponent
+                   // Return manitssa: r20.r19.r18
+                   "	call	__fp_splitA \n\t"
                    "	subi	r25, 127\n\t"
                    //"	sbc	r21, r21\n\t" // Not needed it seems? r21 not used
                    "	clr	r0\n\t"
-                   "	ldi	r26, 0x60\n\t"
+                   "	ldi	r26, 0x60\n\t" // First guess exponent of sqrt(mantissa(r24.r23.r22), exponent(r25))? Rotation mask, what is that?
                    "	ldi	r20, 0xa0\n\t"
-                   "	movw	r18, r0\n\t"
+                   //"	movw	r18, r0\n\t"
+                   "	mov	r19, r1\n\t"
 
                    "	subi	r24, 0x80\n\t"
                    //"	lsr	r21\n\t" // Not needed either?
@@ -132,46 +146,49 @@ float sqrt2(float x){
                    "	brcc	1f\n\t"
                    "	subi	r24, lo8(-0x40)\n\t"
 
-                   ".Loop:	lsl	r22\n\t"
-                   "	rol	r23\n\t"
+                   ".Loop:\n\t"
+                   //"  lsl	r22\n\t"
+                   "	lsl	r23\n\t"
                    "	rol	r24\n\t"
                    "	brcs	2f\n\t"
-                   "1: cp	r18, r22\n\t"
-                   "	cpc	r19, r23\n\t"
+                   //"1: cp	r18, r22\n\t"
+                   "1:	cp	r19, r23\n\t"
                    "	cpc	r20, r24\n\t"
                    "	brcc	3f\n\t"
-                   "2:	sub	r22, r18\n\t"
-                   "	sbc	r23, r19\n\t"
+                   //"2:	sub	r22, r18\n\t"
+                   "2:	sub	r23, r19\n\t"
                    "	sbc	r24, r20\n\t"
-                   "	or	r18, r0\n\t"
+                   //"	or	r18, r0\n\t"
                    "	or	r19, r1\n\t"
                    "	or	r20, r26\n\t"
                    "3:	lsr	r26\n\t"
                    "	ror	r1\n\t"
                    "	ror	r0\n\t"
-                   "	eor	r18, r0\n\t"
+                   //"	eor	r18, r0\n\t"
                    "	eor	r19, r1\n\t"
                    "	eor	r20, r26\n\t"
                    "	brcc	.Loop\n\t"
 
-                   ".Loop1:	lsl	r22\n\t"
-                   "	rol	r23\n\t"
+                   ".Loop1:\n\t"
+                   //"  lsl	r22\n\t"
+                   "	lsl	r23\n\t"
                    "	rol	r24\n\t"
                    "	brcs	4f\n\t"
-                   "	cp	r18, r22\n\t"
-                   "	cpc	r19, r23\n\t"
+                   //"	cp	r18, r22\n\t"
+                   "	cp	r19, r23\n\t"
                    "	cpc	r20, r24\n\t"
                    "	brcc	5f\n\t"
-                   "4:	sbc	r22, r18\n\t"
-                   "	sbc	r23, r19\n\t"
+                   //"4:	sbc	r22, r18\n\t"
+                   "4:	sbc	r23, r19\n\t"
                    "	sbc	r24, r20\n\t"
-                   "	add	r18, r0\n\t"
-                   "	adc	r19, r1\n\t"
+                   //"	add	r18, r0\n\t"
+                   "	add	r19, r1\n\t"
                    "	adc	r20, r1\n\t"
                    "5:	com	r26\n\t"
                    "	brne	.Loop1\n\t"
 
-                   "	movw	r22, r18\n\t"
+                   //"	movw	r22, r18\n\t"
+                   "	mov	r23, r19\n\t"
                    "	mov	r24, r20\n\t"
 
                    "	subi	r25, lo8(-127)\n\t"
@@ -189,13 +206,55 @@ float sqrt2(float x){
   //return 1.0;
 }
 
+float float_div2(float a){
+  __asm__ volatile("	call	__fp_splitA \n\t"
+                   "	ldi	r18, 1\n\t"
+                   "	ldi	r19, 255\n\t"
+                   "	ldi	r20, 1\n\t"
+                   "	ldi	r21, 1\n\t"
+                   "	ldi	r22, 1\n\t"
+                   "	ldi	r23, 1\n\t"
+                   "	ldi	r24, 1\n\t"
+                   "	ldi	r25, 1\n\t"
+                   "  ret\n\t"
+                   );
+}
+
+// Fixed point iteration using previous result as initial guess
+// l holds previous found length and squared length (exact through x*x + y*y, not through l[0]*l[0])
+// Never returns...
+void sqrt3( float l[2], float x, float y){
+  float diff;
+  // old squared length - new squared length
+  //diff = l[1];
+  l[1] = x*x + y*y;
+  //diff -= l[1];
+  // fixed point iteration
+  do{
+    diff = l[0]*l[0] - l[1];
+    l[0] = l[0] - diff;
+  }while(fabs(diff) > 0.01);
+}
+
+float sqrt4(float x, float y){
+  float tmp;
+  x = fabs(x);
+  y = fabs(y);
+  if(y>x){
+    tmp = x;
+    x = y;
+    y = tmp;
+  }
+  return x + y/2;
+}
 
 void setup(){
   Serial.begin(9600);
+  delay(100); // Wait 50 microseconds for serial initialization
   Serial.println("Benchmarking vector length functions...");
 }
 
-void reg_value(){
+void print_reg_value(){
   volatile register int val __asm__("r22");
   __asm__ volatile("ldi r22, 0b10011111\n\t");
   __asm__ volatile("ldi r23, 0b11111111\n\t");
@@ -207,42 +266,86 @@ void reg_value(){
 }
 
 void loop0(){
-  sqrt2(1002.0);
-  delay(1000);
+  float a = 200.0;
+  Serial.println(float_div2(a), 16);
+  delay(2000);
 }
 
 void loop(){
-  unsigned long start, time;
-  volatile float result;
+  unsigned long start, time0, time1, looptime;
+  volatile float result = 999.9;
   float x, y;
+  //float l[2] = { 999.9, 0 };
+
+  float STEP = 0.1;
+  float STARTLENGTH = 1000.0;
+  float STOPLENGTH = 1020.0;
+
+
   start = millis();
-  for(x = 10000.0; x < 20000.0; x += 50.0){
-    for(y = 10000.0; y < 20000.0; y += 50.0){ 
+  for(x = STARTLENGTH; x < STOPLENGTH; x += STEP){
+    for(y = STARTLENGTH; y < STOPLENGTH; y += STEP){
+      __asm__ volatile("");
+      result = 0.0;
+    }
+  }
+  looptime = millis() - start;
+  Serial.print("looptime is  ");
+  Serial.println(looptime);
+
+
+  start = millis();
+  for(x = STARTLENGTH; x < STOPLENGTH; x += STEP){
+    for(y = STARTLENGTH; y < STOPLENGTH; y += STEP){
+      result=sqrt(x*x + y*y);
+    }
+  }
+  time0 = millis() - start;
+  Serial.print("sqrt(x*x+y*y) took  ");
+  Serial.println(time0 - looptime);
+
+  //start = millis();
+  //for(x = STARTLENGTH; x < STOPLENGTH; x += STEP){
+  //  for(y = STARTLENGTH; y < STOPLENGTH; y += STEP){
+  //    result=sqrt4(x, y);
+  //  }
+  //}
+  //time = millis() - start;
+  //Serial.print("sqrt4(x,y) took ");
+  //Serial.println(time);
+
+
+  //start = millis();
+  //for(x = STARTLENGTH; x < STOPLENGTH; x += STEP){
+  //  for(y = STARTLENGTH; y < STOPLENGTH; y += STEP){
+  //    __asm__ volatile("");
+  //    sqrt3(l, x, y);
+  //  }
+  //}
+  //time = millis() - start;
+  //Serial.print("sqrt3(x*x+y*y) took ");
+  //Serial.println(time);
+
+
+  start = millis();
+  for(x = STARTLENGTH; x < STOPLENGTH; x += STEP){
+    for(y = STARTLENGTH; y < STOPLENGTH; y += STEP){
       result=sqrt2(x*x + y*y);
     }
   }
-  time = millis() - start;
+  time1 = millis() - start;
   Serial.print("sqrt2(x*x+y*y) took ");
-  Serial.println(time);
+  Serial.println(time1 - looptime);
 
-  start = millis();
-  for(x = 10000.0; x < 20000.0; x += 50.0){
-    for(y = 10000.0; y < 20000.0; y += 50.0){
-      //result = return_gibberish(x, y);
-      __asm__ volatile("");
-      result=sqrt(x*x + y*y);
-      //section1 += millis() - section1_start;
-    }
-  }
-  time = millis() - start;
-  Serial.print("sqrt(x*x+y*y) took  ");
-  Serial.println(time);
+  Serial.print("improvement is ");
+  Serial.println(1.0 - (float)(time1 - looptime)/(float)(time0 - looptime),5);
 
   float max_err = 0.0;
   float err;
-  for(x = 10000.0; x < 20000.0; x += 50.0){
-    for(y = 10000.0; y < 20000.0; y += 50.0){
-      err = fabs(sqrt(x*x+y*y) - sqrt2(x*x+y*y));
+  result = 999.9;
+  for(x = STARTLENGTH; x < STOPLENGTH; x += STEP){
+    for(y = STARTLENGTH; y < STOPLENGTH; y += STEP){
+      err = fabs(sqrt(x*x+y*y) - sqrt2(x*x + y*y));
 //      if(err != 0.0) {
 //        Serial.println("We have a difference");
 //        return;
@@ -252,5 +355,6 @@ void loop(){
   }
   Serial.print("max_err: ");
   Serial.println(max_err,10);
+  Serial.println("");
   return;
 }
