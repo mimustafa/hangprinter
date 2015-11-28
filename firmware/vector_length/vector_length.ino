@@ -136,10 +136,10 @@ float sqrt2(float x){
                    //"  bst	r25, 7\n\t"
 	                 "  rol	r25\n\t" // kick sign bit out. Arguments to sqrt2 always positive
 	                 "  cpi	r25, 0xff\n\t"
-	                 "  breq	.else\n\t"
+	                 "  breq	.then\n\t"
                    "  ror	r24\n\t"
-                   "  rjmp .sqrt_start\n\t"
-                   ".else:\n\t"
+                   "  rjmp .else\n\t"
+                   ".then:\n\t"
                    "  lsr	r24\n\t"
 
 // if cpi then lsr r24 else ror r24
@@ -151,7 +151,7 @@ float sqrt2(float x){
 
 
 
-                   ".sqrt_start:\n\t"
+                   ".else:\n\t"
                    "	subi	r25, 127\n\t"
                    //"	sbc	r21, r21\n\t" // Not needed it seems? r21 not used
                    "	clr	r0\n\t"
@@ -308,7 +308,7 @@ void loop(){
   for(x = STARTLENGTH; x < STOPLENGTH; x += STEP){
     for(y = STARTLENGTH; y < STOPLENGTH; y += STEP){
       __asm__ volatile("");
-      result = 0.0;
+      result = x*x + y*y;
     }
   }
   looptime = millis() - start;
