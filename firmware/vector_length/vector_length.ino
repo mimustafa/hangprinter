@@ -116,7 +116,7 @@ float taxi_approx64_delta(float x, float y){
 /* A less safe sqrt (doesn't handle sqrt, negatives, NaN or Inf)
  * works on atmega2560 */
 float sqrt2(float x){
-  volatile register int val __asm__("r0");
+  //volatile register int val __asm__("r0");
 
   __asm__ volatile(
                   "#define rB0 r18\n\t"
@@ -169,25 +169,26 @@ float sqrt2(float x){
                    "	eor	r20, r26\n\t"
                    "	brcc	.Loop\n\t"
 
-                   ".Loop1:\n\t"
-                   //"  lsl	r22\n\t"
-                   "	lsl	r23\n\t"
-                   "	rol	r24\n\t"
-                   "	brcs	4f\n\t"
-                   //"	cp	r18, r22\n\t"
-                   "	cp	r19, r23\n\t"
-                   "	cpc	r20, r24\n\t"
-                   "	brcc	5f\n\t"
-                   //"4:	sbc	r22, r18\n\t"
-                   "4:	sbc	r23, r19\n\t"
-                   "	sbc	r24, r20\n\t"
-                   //"	add	r18, r0\n\t"
-                   "	add	r19, r1\n\t"
-                   "	adc	r20, r1\n\t"
-                   "5:	com	r26\n\t"
-                   "	brne	.Loop1\n\t"
+                   //".Loop1:\n\t"
+                   ////"  lsl	r22\n\t"
+                   //"	lsl	r23\n\t"
+                   //"	rol	r24\n\t"
+                   //"	brcs	4f\n\t"
+                   ////"	cp	r18, r22\n\t"
+                   //"	cp	r19, r23\n\t"
+                   //"	cpc	r20, r24\n\t"
+                   //"	brcc	5f\n\t"
+                   ////"4:	sbc	r22, r18\n\t"
+                   //"4:	sbc	r23, r19\n\t"
+                   //"	sbc	r24, r20\n\t"
+                   ////"	add	r18, r0\n\t"
+                   //"	add	r19, r1\n\t"
+                   //"	adc	r20, r1\n\t"
+                   //"5:	com	r26\n\t"
+                   //"	brne	.Loop1\n\t"
 
                    //"	movw	r22, r18\n\t"
+                   "  ldi r22, 170\n\t"
                    "	mov	r23, r19\n\t"
                    "	mov	r24, r20\n\t"
 
@@ -277,9 +278,9 @@ void loop(){
   float x, y;
   //float l[2] = { 999.9, 0 };
 
-  float STEP = 0.1;
+  float STEP = 0.3;
   float STARTLENGTH = 1000.0;
-  float STOPLENGTH = 1020.0;
+  float STOPLENGTH = 1200.0;
 
 
   start = millis();
