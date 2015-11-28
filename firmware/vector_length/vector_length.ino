@@ -131,7 +131,27 @@ float sqrt2(float x){
 
                    // r21 is return exponent
                    // Return manitssa: r20.r19.r18
-                   "	call	__fp_splitA \n\t"
+                   //"	call	__fp_splitA \n\t"
+	                 "  lsl	r24\n\t"
+                   //"  bst	r25, 7\n\t"
+	                 "  rol	r25\n\t" // kick sign bit out. Arguments to sqrt2 always positive
+	                 "  cpi	r25, 0xff\n\t"
+	                 "  breq	.else\n\t"
+                   "  ror	r24\n\t"
+                   "  rjmp .sqrt_start\n\t"
+                   ".else:\n\t"
+                   "  lsr	r24\n\t"
+
+// if cpi then lsr r24 else ror r24
+                   //".fp_hack_2:\n\t"
+                   //"  lsr	r24\n\t"
+                   //"rjmp .back"
+
+
+
+
+
+                   ".sqrt_start:\n\t"
                    "	subi	r25, 127\n\t"
                    //"	sbc	r21, r21\n\t" // Not needed it seems? r21 not used
                    "	clr	r0\n\t"
@@ -197,6 +217,7 @@ float sqrt2(float x){
                    "	lsr	r25\n\t"
                    "	ror	r24\n\t"
                    "	ret\n\t"
+
                    );
   // For printing contents of two registers...
   //int val2 = val;
@@ -278,9 +299,9 @@ void loop(){
   float x, y;
   //float l[2] = { 999.9, 0 };
 
-  float STEP = 0.3;
+  float STEP = 3.3;
   float STARTLENGTH = 1000.0;
-  float STOPLENGTH = 1200.0;
+  float STOPLENGTH = 2200.0;
 
 
   start = millis();
