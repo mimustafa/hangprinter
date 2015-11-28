@@ -113,6 +113,156 @@ float taxi_approx64_delta(float x, float y){
   return((x + c)*cache[i] - c*cache[i+1]);
 }
 
+// Normalizes subnormal number
+float norm2(float x){
+  __asm__ volatile(
+"1:	subi	r25, lo8(1)\n\t"
+"	sbci	r21, hi8(1)\n\t"
+"	lsl	r22\n\t"
+"	rol	r23\n\t"
+"	rol	r25\n\t"
+"	brpl	1b\n\t"
+"	ret\n\t"
+  );
+}
+
+float rough_square(float x){
+  __asm__ volatile(
+// contents of square.S
+"   movw	r18, r22\n\t"
+"   movw	r20, r24\n\t" // B = A
+// fp_split3 starts here
+"   sbrc	r21, 7\n\t"
+"   subi	r25, 0x80\n\t"
+//  split B
+"   lsl	r20\n\t"
+"   rol	r21\n\t" //	; exponent
+//"   breq	4f\n\t" // TODO: Handle these like then0 else0 was handeled for A
+"   cpi	r21, 0xff\n\t" // C = 1, if r21 != 0xff
+//"   breq	5f\n\t"
+"1:	ror	r20\n\t" //	restore rB2 and (possible) hidden bit
+// entry of fp_splitA
+" 	lsl	r24\n\t"
+" 	rol	r25\n\t" // kick sign bit out. Arguments always positive
+" 	cpi	r25, 0xff\n\t"
+" 	breq	.then0\n\t"
+"   ror	r24\n\t"
+"   rjmp .else0\n\t"
+".then0:\n\t"
+"  lsr	r24\n\t"
+".else0:\n\t"
+// fp_split3 ends here
+
+
+// rB3.rA3 := rA3 + rB3
+"   add	r25, r21\n\t"
+"   ldi	r21, 0\n\t"
+"   adc	r21, r21\n\t"
+
+//  multiplication:  r24.r23.r22 * r20.r19.r18  -->  r24.r23.r22.r27.r31.r30
+//  r31.r30 = r22 * r18
+" 	mul	r22, r18\n\t"
+" 	movw	r30, r0\n\t"
+//  r27.r31 += r23 * r18
+" 	mul	r23, r18\n\t"
+" 	clr	r27\n\t"
+" 	add	r31, r0\n\t"
+" 	adc	r27, r1\n\t"
+//  r26.r27.r31 = r27.r31 + r22 * r19
+" 	mul	r22, r19\n\t"
+" 	clr	r26\n\t"
+" 	add	r31, r0\n\t"
+" 	adc	r27, r1\n\t"
+" 	adc	r26, r26\n\t"
+//  r22.r26.r27 = r26.r27 + r22 * r20
+" 	mul	r22, r20\n\t"
+" 	clr	r22\n\t"
+" 	add	r27, r0\n\t"
+" 	adc	r26, r1\n\t"
+" 	adc	r22, r22\n\t"
+//  r22.r26.r27 += r24 * r18
+" 	mul	r24, r18\n\t"
+" 	clr	r18\n\t"
+" 	add	r27, r0\n\t"
+" 	adc	r26, r1\n\t"
+" 	adc	r22, r18\n\t"
+//  r22.r26.r27 += r23 * r19
+" 	mul	r23, r19\n\t"
+" 	add	r27, r0\n\t"
+" 	adc	r26, r1\n\t"
+" 	adc	r22, r18\n\t" // r18 == 0
+//  r18.r22.r26 = r22.r26 + r24 * r19
+" 	mul	r24, r19\n\t"
+" 	add	r26, r0\n\t"
+" 	adc	r22, r1\n\t"
+" 	adc	r18, r18\n\t" // r18 was 0
+//  r18.r22.r26 += r23 * r20
+" 	mul	r23, r20\n\t"
+" 	clr	r19\n\t"
+" 	add	r26, r0\n\t"
+" 	adc	r22, r1\n\t"
+" 	adc	r18, r19\n\t"
+//  r18.r22 += r24 * r20
+" 	mul	r24, r20\n\t"
+" 	add	r22, r0\n\t"
+" 	adc	r18, r1\n\t"
+//  move result:  r24.r23.r22.r27.r31.r30 = r18.r22.r26.r27.r31.r30
+" 	mov	r24, r18\n\t"
+" 	mov	r23, r22\n\t"
+" 	mov	r22, r26\n\t"
+//  __zero_reg__
+" 	clr	r1\n\t"
+
+//  exponent -= 127	(Why not 126?  For compare conviniency.)
+" 	subi	r25, lo8(127)\n\t"
+" 	sbci	r21, hi8(127)\n\t"
+
+" 10:	tst	r24\n\t"
+" 	brmi	11f\n\t"	// mantissa is normal
+//  mantissa <<= 1"
+" 	lsl	r30\n\t"
+" 	rol	r31\n\t"
+" 	rol	r27\n\t"
+" 	rol	r22\n\t"
+" 	rol	r23\n\t"
+" 	rol	r24\n\t"
+//  exponent -= 1
+" 	subi	r25, lo8(1)\n\t"
+" 	sbci	r21, hi8(1)\n\t"
+" 	brne	10b\n\t"
+//  check to overflow
+" 11:	cpi	r25, 254\n\t"
+" 	cpc	r21, r1\n\t"
+//" 	brlo	15f\n\t"
+//" 	rjmp	_U(__fp_inf)\n\t"
+//  check lowest value of exponent to avoid long operation
+//" 12:	rjmp	_U(__fp_szero)\n\t"
+" 13:	cpi	r21, hi8(-24)\n\t" // here r21 < 0
+//" 	brlt	12b\n\t"
+" 	cpi	r25, lo8(-24)\n\t"
+//" 	brlt	12b\n\t"
+//  mantissa >>= -r25
+" 14:	lsr	r24\n\t"
+" 	ror	r23\n\t"
+" 	ror	r22\n\t"
+" 	ror	r27\n\t"
+" 	ror	r31\n\t"
+" 	ror	r30\n\t"
+" 	subi	r25, -1\n\t"
+" 	brne	14b\n\t"
+//  for rounding
+" 15:	or	r31, r30\n\t"
+//  pack
+" 	lsl	r24\n\t"
+" 	adc	r25, r1\n\t"	// restore exponent for normal values
+" 	lsr	r25\n\t"
+" 	ror	r24\n\t"
+" 	bld	r25, 7\n\t" // sign
+" 	ret\n\t"
+);
+}
+
+
 /* A less safe sqrt (doesn't handle sqrt, negatives, NaN or Inf)
  * works on atmega2560 */
 float sqrt2(float x){
@@ -128,6 +278,9 @@ float sqrt2(float x){
                   "#define rA2 r24\n\t"
                   "#define rA3 r25\n\t"
                   "#define rBE r26\n\t"
+                  "#define rAE r26\n\t"
+                  // ZL = r30
+                  // ZH = r31
 
                    // r21 is return exponent
                    // Return manitssa: r20.r19.r18
@@ -287,13 +440,14 @@ void print_reg_value(){
   Serial.println((val2 & 0xFF00) >> 8, BIN);
 }
 
-void loop0(){
-  float a = 200.0;
-  Serial.println(float_div2(a), 16);
+void loop(){
+  float a = 11111111.0;
+  Serial.println(rough_square(a), 16);
   delay(2000);
 }
 
-void loop(){
+
+void loop0(){
   unsigned long start, time0, time1, looptime;
   volatile float result = 999.9;
   float x, y;
@@ -348,7 +502,6 @@ void loop(){
   //Serial.print("sqrt3(x*x+y*y) took ");
   //Serial.println(time);
 
-
   start = millis();
   for(x = STARTLENGTH; x < STOPLENGTH; x += STEP){
     for(y = STARTLENGTH; y < STOPLENGTH; y += STEP){
@@ -359,6 +512,7 @@ void loop(){
   Serial.print("sqrt2(x*x+y*y) took ");
   Serial.println(time1 - looptime);
 
+
   Serial.print("improvement is ");
   Serial.println(1.0 - (float)(time1 - looptime)/(float)(time0 - looptime),5);
 
@@ -368,6 +522,7 @@ void loop(){
   for(x = STARTLENGTH; x < STOPLENGTH; x += STEP){
     for(y = STARTLENGTH; y < STOPLENGTH; y += STEP){
       err = fabs(sqrt(x*x+y*y) - sqrt2(x*x + y*y));
+      //err = fabs(sqrt(x*x+y*y) - norm2(x));
 //      if(err != 0.0) {
 //        Serial.println("We have a difference");
 //        return;
