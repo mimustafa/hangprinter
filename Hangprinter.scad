@@ -1,4 +1,4 @@
-include <measured_numbers.scad>
+include <measublue_numbers.scad>
 include <design_numbers.scad>
 use <parts.scad>
 use <placed_parts.scad>
@@ -14,27 +14,33 @@ use <render_parts.scad>
 //    might be worth it...
 
 // Rendering control
-render_bottom_plate = true;
-render_sandwich     = true;
-render_abc_motors   = true;
-render_fish_rings   = true;
-render_lines        = true;
-render_extruder     = true;
-render_hotend       = true;
-render_ramps        = false;
-render_plates       = false;
-render_filament     = true;
+render_bottom_plate  = true;
+render_sandwich      = true;
+render_abc_motors    = true;
+render_fish_rings    = true;
+render_lines         = true;
+render_extruder      = true;
+render_hotend        = true;
+render_ramps         = true;
+render_plates        = true;
+render_filament      = true;
+render_wall_vgrooves = true;
 
 module full_render(){
+  if(render_wall_vgrooves){
+    placed_wall_vgrooves();
+  }
+
   if(render_bottom_plate){
-    //bottom_plate();
+    color(Printed_color_1)
+    bottom_plate();
     // For better rendering performance, precompile bottom_plate
-    precompiled("stl/bottom_plate_for_render.stl");
+    //precompiled("stl/bottom_plate_for_render.stl");
   }
   if(render_sandwich){
-    //placed_sandwich();
+    placed_sandwich();
     // For better rendering performance, precompile placed sandwich
-    precompiled("stl/complete_sandwich_for_render.stl");
+    //precompiled("stl/complete_sandwich_for_render.stl");
   }
   if(render_abc_motors){
     placed_abc_motors();
@@ -43,7 +49,7 @@ module full_render(){
     placed_fish_rings();
   }
   if(render_lines){
-    color("green")
+    color("yellow")
     placed_lines();
   }
   if(render_extruder){
@@ -56,6 +62,7 @@ module full_render(){
     placed_ramps();
   }
   if(render_plates){
+    color(Printed_color_1)
     placed_plates();
   }
   if(render_filament){
