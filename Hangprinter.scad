@@ -18,10 +18,6 @@ use <render_parts.scad>
 
 
 module full_render(){
-  if(Render_wall_vgrooves){
-    placed_wall_vgrooves();
-  }
-
   if(Render_bottom_plate){
     bottom_plate();
     // For better rendering performance, precompile bottom_plate
@@ -58,7 +54,7 @@ module full_render(){
     filament();
   }
 }
-//full_render();
+full_render();
 
 // *** Cubes and text to illustrate ANCHOR_A_Y measurment *** //
 //translate([-7.5,
@@ -82,8 +78,6 @@ module precompiled(s){
     echo("Warning: using precompiled file", s);
     import(s);
 }
-
-precompiled("stl//Complete_printer_17_Dec_2015/Bottom_plate_1.stl");
 
 module sandwich_exploded_view(){
   translate([0,0,0]){

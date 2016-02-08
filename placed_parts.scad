@@ -20,10 +20,10 @@ module placed_lines(){
           // Pairs of inner abc-lines (onboard printer)
           translate([0,0, Line_contacts_abcd_z[i]]){
             pline(tangent_point(Snelle_radius, Line_contact_abc_xy),
-                Line_contact_abc_xy, 0.8);
+                Line_contact_abc_xy, 0.7);
             pline(tangent_point_2(Snelle_radius,
                   Mirrored_line_contact_abc_xy),
-                Mirrored_line_contact_abc_xy, 0.8);
+                Mirrored_line_contact_abc_xy, 0.7);
           }
         }
         if(Render_D_lines){
@@ -39,12 +39,20 @@ module placed_lines(){
       if(Render_ABC_lines)
       translate([0,0,i]){
         // Outer pair of a-lines
-        pline(Wall_action_point_a + [0,0,0.4*Bearing_623_outer_diameter] + [-Abc_xy_split/2,0,0], Line_contact_abc_xy + [0,0,Line_contacts_abcd_z[A]]);
-        pline(Wall_action_point_a + [0,0,0.4*Bearing_623_outer_diameter] + [ Abc_xy_split/2,0,0], Mirrored_line_contact_abc_xy + [0,0,Line_contacts_abcd_z[A]]);
+        pline(Wall_action_point_a
+        + [0,19,0.9*Bearing_623_outer_diameter] // Wall bearing account
+        + [-Abc_xy_split/2,0,0],
+              Line_contact_abc_xy + [0,0,Line_contacts_abcd_z[A]]);
+        pline(Wall_action_point_a + [0,19,0.9*Bearing_623_outer_diameter] + [ Abc_xy_split/2,0,0],
+              Mirrored_line_contact_abc_xy + [0,0,Line_contacts_abcd_z[A]]);
         // Outer pair of b-lines
-        pline(Wall_action_point_b + [0,0,0.4*Bearing_623_outer_diameter] + rotate_point_around_z(240, [-Abc_xy_split/2,0,0]),
+        pline(Wall_action_point_b
+        + [-18,-11,0.7*Bearing_623_outer_diameter] // fit wall bearing
+        + rotate_point_around_z(240, [-Abc_xy_split/2,0,0]),
             rotate_point_around_z(240, Line_contact_abc_xy) + [0,0,Line_contacts_abcd_z[B]]);
-        pline(Wall_action_point_b + [0,0,0.4*Bearing_623_outer_diameter] + rotate_point_around_z(240, [ Abc_xy_split/2,0,0]),
+        pline(Wall_action_point_b
+        + [-18,-11,0.7*Bearing_623_outer_diameter] // fit wall bearing
+        + rotate_point_around_z(240, [ Abc_xy_split/2,0,0]),
             rotate_point_around_z(240, Mirrored_line_contact_abc_xy + [0,0,Line_contacts_abcd_z[B]]));
         // Outer pair of c-lines
         pline(Wall_action_point_c + [0,0,0.4*Bearing_623_outer_diameter] + rotate_point_around_z(120, [-Abc_xy_split/2,0,0]),
@@ -72,27 +80,6 @@ module placed_lines(){
   }
 }
 //placed_lines();
-
-module placed_wall_vgrooves(){
-  color("purple"){
-    for(r=[0,120,240]){
-      rotate([0,0,r]){
-        // Bearings at wall
-        if(Render_bearings)
-        translate(Wall_action_point_a + [Abc_xy_split/2,7,1])
-          rotate([0,90,0])
-          translate([-1,Bearing_623_vgroove_big_diameter/2,-Bearing_623_width/2])
-          Bearing_623_vgroove();
-        if(Render_bearings)
-        translate(Wall_action_point_a - [Abc_xy_split/2,-7,-1])
-          rotate([0,90,0])
-          translate([-1,Bearing_623_vgroove_big_diameter/2,-Bearing_623_width/2])
-          Bearing_623_vgroove();
-      }
-    }
-  }
-}
-
 
 module bearing_filled_sandwich(){
   sandwich();

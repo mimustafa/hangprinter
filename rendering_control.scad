@@ -13,7 +13,7 @@ Render_ramps         = true;
 Render_plates        = true;
 Render_filament      = true;
 Render_wall_vgrooves = true;
-Render_screws        = false;
+Render_screws        = true;
 
 Printed_color_1 = "deepskyblue";
 Printed_color_2 = "sandybrown";

@@ -137,6 +137,7 @@ module Bearing_623_vgroove(){
   h2 = Bearing_623_vgroove_width;
   h_edge = (h1-h2)/2;
   big = 100;
+  color("purple")
   difference(){
     for(k = [0,1]){
       translate([0,0,h1*k]){

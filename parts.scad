@@ -348,8 +348,8 @@ module bottom_plate(){
 }
 // The rotate is for easier fitting print bed when printing
 // this part on 200 mm square print bed
-rotate([0,0,15])
-bottom_plate();
+//rotate([0,0,15])
+//bottom_plate();
 
 //** bottom_plate end **//
 
@@ -743,8 +743,7 @@ module top_plate(){
             color(Line_color)
             cylinder(r=0.5, h=16);
           translate([0,0,-16]){
-            color("purple")
-              rotate([90,0,90])
+            rotate([90,0,90])
               translate([0,-4,-Bearing_623_vgroove_width/2])
               Bearing_623_vgroove();
             rotate([90,-45,0])
@@ -874,6 +873,53 @@ module side_plate2(height=15,th=7){
         translate([ 4.5,-3,height/2-0.1]) cylinder(r=2.5, h=7);
       }
   }
+  if(Render_wall_vgrooves){
+    rotate([14,0,0])
+    for(k=[1,0])
+      mirror([k,0,0]){
+        translate([Abc_xy_split/2,24,0])
+          rotate([0,90,0]){
+            translate([0,0,-Bearing_623_vgroove_width/2])
+              Bearing_623_vgroove();
+            translate([0,-4,0])
+              rotate([-90-45,0,0])
+              rotate([0,90,0])
+              color(Line_color)
+              teardrop_line_shape(4);
+            translate([0,-25,0])
+              rotate([-90,0,0])
+              color(Line_color)
+              cylinder(r=0.5, h=17);
+          }
+        // Line that wraps around poles and screw
+        translate([18,2,10])
+          rotate([3,90,0])
+          color(Line_color){
+            cylinder(r=0.5, h=45);
+            translate([0,0,45]){
+              rotate([-54,0,0]){
+                cylinder(r=0.5, h=12);
+                translate([0,0,12])
+                  rotate([90,0,0]){
+                    cylinder(r=0.5, h=4.1);
+                    translate([0,0,4.0])
+                      rotate([45,34,0])
+                      cylinder(r=0.5, h=5.8);
+                  }
+              }
+            }
+          }
+      }
+  }
+  if(Render_screws){
+    for(k=[1,0])
+      mirror([k,0,0])
+        translate([0,0,10])
+          rotate([180,0,0])
+          translate([20,-th/2,-20/2])
+            color(Screw_color_2)
+            M3_screw(20);
+  }
 }
 //side_plate2();
 
@@ -942,6 +988,51 @@ module side_plate3(height=15,th=7){
       translate([0,-th,0])
       rotate([-15,0,0]) translate([-1,-5,0]) cube([2,5,height]);
   }
+  if(Render_wall_vgrooves){
+    rotate([-10,0,0])
+    mirror([0,1,0])
+    for(k=[1,0])
+      mirror([k,0,0]){
+        translate([Abc_xy_split/2,24,0])
+          rotate([0,90,0]){
+            translate([0,0,-Bearing_623_vgroove_width/2])
+              Bearing_623_vgroove();
+            translate([0,-4,0])
+              rotate([-90-45,0,0])
+              rotate([0,90,0])
+              color(Line_color)
+              teardrop_line_shape(4);
+            translate([0,-25,0])
+              rotate([-90,0,0])
+              color(Line_color)
+              cylinder(r=0.5, h=17);
+          }
+        // Line that wraps around poles and screw
+        translate([18,2,10])
+          rotate([3,90,0])
+          color(Line_color){
+            cylinder(r=0.5, h=45);
+            translate([0,0,45]){
+              rotate([-54,0,0]){
+                cylinder(r=0.5, h=12);
+                translate([0,0,12])
+                  rotate([90,0,0]){
+                    cylinder(r=0.5, h=4.1);
+                    translate([0,0,4.0])
+                      rotate([45,34,0])
+                      cylinder(r=0.5, h=5.8);
+                  }
+              }
+            }
+          }
+      }
+  }
+  if(Render_screws){
+    for(k=[1,0])
+      mirror([k,0,0])
+        translate([20,-th/2,2])
+          M3_screw(20, updown = true);
+  }
 }
 //mirror([1,0,0])
-//side_plate3();
+side_plate3();

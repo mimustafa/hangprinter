@@ -5,7 +5,7 @@ include <design_numbers.scad>
 // Modules not in contact with any printed parts
 // Just explanatory
 module filament(){
-  color("white") translate([0,0,-50]) cylinder(r=1.75/2, h = 300);
+  color("white") translate([0,0,-50]) cylinder(r=1.75/2, h = 200);
 }
 //filament();
 
