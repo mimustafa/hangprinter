@@ -1,6 +1,7 @@
 include <measured_numbers.scad>
 include <util.scad>
 include <design_numbers.scad>
+include <rendering_control.scad>
 use <Gears.scad>
 use <parts.scad>
 use <render_parts.scad>
@@ -12,46 +13,63 @@ use <Nema17_and_Ramps_and_bearings.scad>
 module placed_lines(){
   th  = Bottom_plate_thickness;
   // Lines from sandwich out to gatts
-  for(i=[0,1,2]){
-    rotate([0,0,i*120]){
-      // Pairs of inner abc-lines (onboard printer)
-      translate([0,0, Line_contacts_abcd_z[i]]){
-        pline(tangent_point(Snelle_radius, Line_contact_abc_xy),
-            Line_contact_abc_xy, 0.8);
-        pline(tangent_point_2(Snelle_radius,
-              Mirrored_line_contact_abc_xy),
-            Mirrored_line_contact_abc_xy, 0.8);
+  color(Line_color){
+    for(i=[0,1,2]){
+      rotate([0,0,i*120]){
+        if(Render_ABC_lines){
+          // Pairs of inner abc-lines (onboard printer)
+          translate([0,0, Line_contacts_abcd_z[i]]){
+            pline(tangent_point(Snelle_radius, Line_contact_abc_xy),
+                Line_contact_abc_xy, 0.8);
+            pline(tangent_point_2(Snelle_radius,
+                  Mirrored_line_contact_abc_xy),
+                Mirrored_line_contact_abc_xy, 0.8);
+          }
+        }
+        if(Render_D_lines){
+          // inner d-lines (onboard printer)
+          translate([0,0, Line_contacts_abcd_z[3]])
+            pline(tangent_point_3(Snelle_radius, Line_contact_d_xy),
+                Line_contact_d_xy, 0.8);
+        }
       }
-      // inner d-lines (onboard printer)
-      translate([0,0, Line_contacts_abcd_z[3]])
-        pline(tangent_point_3(Snelle_radius, Line_contact_d_xy),
-            Line_contact_d_xy, 0.8);
     }
-  }
-  // Double them all up (gearing down ABC by half)
-  for(i=[0,-0.8*Bearing_623_outer_diameter]){
-    translate([0,0,i]){
-      // Outer pair of a-lines
-      pline(Wall_action_point_a + [0,0,0.4*Bearing_623_outer_diameter] + [-Abc_xy_split/2,0,0], Line_contact_abc_xy + [0,0,Line_contacts_abcd_z[A]]);
-      pline(Wall_action_point_a + [0,0,0.4*Bearing_623_outer_diameter] + [ Abc_xy_split/2,0,0], Mirrored_line_contact_abc_xy + [0,0,Line_contacts_abcd_z[A]]);
-      // Outer pair of b-lines
-      pline(Wall_action_point_b + [0,0,0.4*Bearing_623_outer_diameter] + rotate_point_around_z(240, [-Abc_xy_split/2,0,0]),
+    // Double them all up (gearing down ABC by half)
+    for(i=[0,-0.8*Bearing_623_outer_diameter]){
+      if(Render_ABC_lines)
+      translate([0,0,i]){
+        // Outer pair of a-lines
+        pline(Wall_action_point_a + [0,0,0.4*Bearing_623_outer_diameter] + [-Abc_xy_split/2,0,0], Line_contact_abc_xy + [0,0,Line_contacts_abcd_z[A]]);
+        pline(Wall_action_point_a + [0,0,0.4*Bearing_623_outer_diameter] + [ Abc_xy_split/2,0,0], Mirrored_line_contact_abc_xy + [0,0,Line_contacts_abcd_z[A]]);
+        // Outer pair of b-lines
+        pline(Wall_action_point_b + [0,0,0.4*Bearing_623_outer_diameter] + rotate_point_around_z(240, [-Abc_xy_split/2,0,0]),
             rotate_point_around_z(240, Line_contact_abc_xy) + [0,0,Line_contacts_abcd_z[B]]);
-      pline(Wall_action_point_b + [0,0,0.4*Bearing_623_outer_diameter] + rotate_point_around_z(240, [ Abc_xy_split/2,0,0]),
+        pline(Wall_action_point_b + [0,0,0.4*Bearing_623_outer_diameter] + rotate_point_around_z(240, [ Abc_xy_split/2,0,0]),
             rotate_point_around_z(240, Mirrored_line_contact_abc_xy + [0,0,Line_contacts_abcd_z[B]]));
-      // Outer pair of c-lines
-      pline(Wall_action_point_c + [0,0,0.4*Bearing_623_outer_diameter] + rotate_point_around_z(120, [-Abc_xy_split/2,0,0]),
+        // Outer pair of c-lines
+        pline(Wall_action_point_c + [0,0,0.4*Bearing_623_outer_diameter] + rotate_point_around_z(120, [-Abc_xy_split/2,0,0]),
             rotate_point_around_z(120, Line_contact_abc_xy) + [0,0,Line_contacts_abcd_z[C]]);
-      pline(Wall_action_point_c + [0,0,0.4*Bearing_623_outer_diameter] + rotate_point_around_z(120, [ Abc_xy_split/2,0,0]),
+        pline(Wall_action_point_c + [0,0,0.4*Bearing_623_outer_diameter] + rotate_point_around_z(120, [ Abc_xy_split/2,0,0]),
             rotate_point_around_z(120, Mirrored_line_contact_abc_xy + [0,0,Line_contacts_abcd_z[C]]));
+      }
     }
+    // d-lines
+    if(Render_D_lines)
+    for(i=[0,1,2])
+      rotate([0,0,i*120]){
+        eline(Line_contact_d_xy +
+          [0,-0.4*Bearing_623_outer_diameter,Line_contacts_abcd_z[D]],
+          Line_contact_d_xy +
+          Ceiling_action_point +
+          [0,0,-15]);
+        eline(Line_contact_d_xy +
+          [0,0.4*Bearing_623_outer_diameter,Line_contacts_abcd_z[D]-6],
+          Line_contact_d_xy +
+          [0,0.8*Bearing_623_outer_diameter,0] +
+          Ceiling_action_point +
+          [0,0,-15]);
+      }
   }
-  // d-lines
-  for(i=[0,1,2])
-    rotate([0,0,i*120]){
-      eline(Line_contact_d_xy + [0,-0.4*Bearing_623_outer_diameter,Line_contacts_abcd_z[D]], Line_contact_d_xy + Ceiling_action_point);
-      eline(Line_contact_d_xy + [0,0.4*Bearing_623_outer_diameter,Line_contacts_abcd_z[D]-6], Line_contact_d_xy + [0,0.8*Bearing_623_outer_diameter,0] + Ceiling_action_point);
-    }
 }
 //placed_lines();
 
@@ -60,27 +78,27 @@ module placed_wall_vgrooves(){
     for(r=[0,120,240]){
       rotate([0,0,r]){
         // Bearings at wall
+        if(Render_bearings)
         translate(Wall_action_point_a + [Abc_xy_split/2,7,1])
           rotate([0,90,0])
           translate([-1,Bearing_623_vgroove_big_diameter/2,-Bearing_623_width/2])
           Bearing_623_vgroove();
+        if(Render_bearings)
         translate(Wall_action_point_a - [Abc_xy_split/2,-7,-1])
           rotate([0,90,0])
           translate([-1,Bearing_623_vgroove_big_diameter/2,-Bearing_623_width/2])
-          Bearing_623_vgroove();
-        translate(Line_contact_d_xy + [0,0,Ceiling_action_point[2]-7])
-          rotate([0,90,0])
-          translate([0,0,-Bearing_623_vgroove_width/2])
           Bearing_623_vgroove();
       }
     }
   }
 }
 
+
 module bearing_filled_sandwich(){
-  color(Printed_color_2) sandwich();
-  Bearing_608();
+  sandwich();
+  translate([0,0,0]) Bearing_608();
   translate([0,0,Bearing_608_width])
+  translate([0,0,0])
   color("gold") lock(Lock_radius_1, Lock_radius_2, Lock_height);
 }
 
@@ -102,13 +120,6 @@ module support_bearing_translate(rotation){
              - cos(rotation)*Pitch_difference_extruder,9]) children(0);
 }
 
-// For rendering
-module support_bearing(rotation){
-  support_bearing_translate(rotation)
-    Bearing_623();
-}
-//support_bearing(0);
-
 // Only for rendering
 module hobbed_insert(){
   color("grey")
@@ -129,7 +140,7 @@ module translated_hobb_tower(){
       translate([0,0,hobbed_insert_placement])
         hobbed_insert();
       translate([0,0, hobbed_insert_placement + Hobbed_insert_height
-                      + 0.2])
+                      - 1.5])
         Bearing_623();
   }
 }
@@ -164,7 +175,6 @@ module assembled_drive(){
             Big_extruder_gear_height + 0.2])//Big gear|.2mm|support
       drive_support(2);
   }
-  support_bearing(Big_extruder_gear_rotation);
   // M3 through support bearing (just rendering)
   translate([0,0,-5.0])
   support_bearing_translate(Big_extruder_gear_rotation)
@@ -180,7 +190,6 @@ module placed_abc_motors(){
     four_point_translate()
       translate([0,0,-Nema17_cube_height - 2])
         Nema17();
-    color(Printed_color_2){
       rotate([0,0,3*72])
         translate([0,Four_point_five_point_radius, Bottom_plate_thickness ])
             motor_gear_d();
@@ -193,7 +202,6 @@ module placed_abc_motors(){
       rotate([0,0,4*72])
         translate([0,Four_point_five_point_radius, Bottom_plate_thickness])
         motor_gear_a();
-    }
 }
 //placed_abc_motors();
 //placed_sandwich();
@@ -201,26 +209,24 @@ module placed_abc_motors(){
 
 module placed_extruder(){
   extruder_motor_translate(Extruder_motor_twist){
+    // For render "mount extruder motor step" in build manual
+    //translate([0,0,55.5])
+    //  small_extruder_gear();
+    //color(Screw_color_1){
+    //  for (i=[0,90]){
+    //    rotate([0,0,i+45]) translate([Nema17_screw_hole_width/2,0,0])
+    //      M3_screw(51, updown=true);
+    //    rotate([0,0,i+45]) translate([Nema17_screw_hole_width/2,0,-31])
+    //      M3_screw(56);
+    //  }
+    //}
     Nema17();
     // Move drive up extruder motor shaft
-    translate([0,0,Nema17_shaft_height - Small_extruder_gear_height+0])
+    translate([0,0,Nema17_shaft_height - Small_extruder_gear_height])
       assembled_drive(Big_extruder_gear_rotation);
   }
 }
 //placed_extruder();
-
-module placed_hotend(){
-    // Manually placed.
-    // For exact placement look in the difference
-    // that creates groove in drive_support
-    translate([-1.1,0.9,-78.3])
-      rotate([0,0,56]){
-        e3d_v6_volcano_hotend(fan=0);
-        // filament following placed hotend
-        //cylinder(r=1.75/2,h=82);
-      }
-}
-//placed_hotend();
 
 module placed_ramps(){
   rotate([0,0,2*90+Extruder_motor_twist])

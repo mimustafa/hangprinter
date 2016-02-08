@@ -2,6 +2,7 @@
 // and Reprappro: https://github.com/reprappro/Extruder-drive
 include <measured_numbers.scad>
 include <design_numbers.scad>
+include <rendering_control.scad>
 include <util.scad>
 use <Nema17_and_Ramps_and_bearings.scad>
 
@@ -184,6 +185,7 @@ module my_gear(teeth, height){
 //my_gear(40,10);
 
 module big_extruder_gear(height=Big_extruder_gear_height){
+  color(Printed_color_1)
   difference(){
     gear(
         number_of_teeth=Big_extruder_gear_teeth,
@@ -215,6 +217,7 @@ module big_extruder_gear(height=Big_extruder_gear_height){
 //big_extruder_gear();
 
 module small_extruder_gear(height=Small_extruder_gear_height){
+  color(Printed_color_1)
 	difference(){
 		union(){
       translate([0,0,0.1])
@@ -260,52 +263,64 @@ module sandwich(){
   od              = Bearing_608_outer_diameter;
   bw              = Bearing_608_width;
   meltlength      = 0.1;
-  difference(){
-    union(){
-      // sandwich gear
-      translate([0, 0, Snelle_height - meltlength])
-        my_gear(Sandwich_gear_teeth, Sandwich_gear_height);
-      // Snelle
-      cylinder(r = Snelle_radius,   h = Snelle_height, $fn=150);
-      cylinder(r = Sandwich_radius, h = Sandwich_edge_thickness, $fn=150);
-      translate([0,0,Snelle_height - Sandwich_edge_thickness])
+  color(Printed_color_2){
+    difference(){
+      union(){
+        // sandwich gear
+        translate([0, 0, Snelle_height - meltlength])
+          my_gear(Sandwich_gear_teeth, Sandwich_gear_height);
+        // Snelle
+        cylinder(r = Snelle_radius,   h = Snelle_height, $fn=150);
         cylinder(r = Sandwich_radius, h = Sandwich_edge_thickness, $fn=150);
+        translate([0,0,Snelle_height - Sandwich_edge_thickness])
+          cylinder(r = Sandwich_radius, h = Sandwich_edge_thickness, $fn=150);
+      }
+      // Dig out the right holes
+      // Bearing hole
+      translate([0, 0, -1.2])
+        cylinder(r = od/2 + 0.15, h = Sandwich_height); // 0.15 added to raduis during print...
+      cylinder(r = od/2-2, h = Big);
+      // Decoration/material saving holes
+      for(i = [1:60:360]){
+        rotate([0,0,i])
+          translate([2*Snelle_radius/3,0,-1])
+          cylinder(r=8.5,h=Big);
+      }
+      rotate([90,0,33])
+        translate([0,Snelle_height/2,Snelle_radius/2])
+        cylinder(r = 0.95, h = 40);
+      rotate([90,0,27])
+        translate([0,Snelle_height/2,Snelle_radius/2])
+        cylinder(r = 0.95, h = 40);
+      // screw holes
+      for(i = [1:120:360]){
+        rotate([0,0,i]){
+          translate([0,Snelle_radius - 4, Sandwich_height + 0.2])
+            mirror([0,0,1])
+            M3_screw(Sandwich_height+2);
+          translate([0,Snelle_radius - 4, -0.5])
+            M3_screw(Sandwich_height+2);
+        }
+      }
     }
-    // Dig out the right holes
-    // Bearing hole
-    translate([0, 0, -1.2])
-      cylinder(r = od/2 + 0.15, h = Sandwich_height); // 0.15 added to raduis during print...
-    cylinder(r = od/2-2, h = Big);
-    // Decoration/material saving holes
-    for(i = [1:60:360]){
-      rotate([0,0,i])
-        translate([2*Snelle_radius/3,0,-1])
-        cylinder(r=8.5,h=Big);
-    }
-    rotate([90,0,33])
-      translate([0,Snelle_height/2,Snelle_radius/2])
-      cylinder(r = 0.95, h = 40);
-    rotate([90,0,27])
-      translate([0,Snelle_height/2,Snelle_radius/2])
-      cylinder(r = 0.95, h = 40);
-    // screw holes
-    for(i = [1:120:360]){
-      rotate([0,0,i]){
-      translate([0,Snelle_radius - 4, Sandwich_height + 0.2])
-      mirror([0,0,1])
-        M3_screw(Sandwich_height+2);
-      translate([0,Snelle_radius - 4, -0.5])
-        M3_screw(Sandwich_height+2);
+  }
+  if(Render_screws){
+    color(Screw_color_2){
+      for(i = [1:120:360]){
+        rotate([0,0,i]){
+          translate([0,Snelle_radius - 4, 0.5])
+            M3_screw(Sandwich_height, updown=true);
+        }
       }
     }
   }
   //Bearing_608();
 }
-sandwich();
+//sandwich();
 
 // May not render correctly in preview...
 module sandwich_gear(){
-  rotate([180,0,0])
+  //rotate([180,0,0])
     difference(){
       sandwich();
       translate([0,0,-1])
@@ -330,6 +345,7 @@ module motor_gear(height = Motor_protruding_shaft_length, letter){
   melt = 0.1;
   teeth = Motor_gear_teeth;
   difference(){
+    color(Printed_color_2)
     union(){
       difference(){
         union(){
@@ -354,6 +370,7 @@ module motor_gear(height = Motor_protruding_shaft_length, letter){
     translate([0,0,height - 2.9])
      cylinder(r2=5/2+0.8, r1=1.6, h=3.0);
 
+    color("black")
     translate([5/2,0,height-1])
       linear_extrude(height=2)
       text(letter,halign="left",valign="center", size=8);

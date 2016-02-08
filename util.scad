@@ -3,19 +3,19 @@ Big   = 300;
 Sqrt3 = sqrt(3);
 pi    = 3.1415926535897932384626433832795;
 
-function mirror_point_x(coord) = 
+function mirror_point_x(coord) =
 [
-	-coord[0], 
+	-coord[0],
 	coord[1],
   coord[2]
 ];
 
-function rotate_point_around_z(angle, p) = 
+function rotate_point_around_z(angle, p) =
 [
 	cos(angle)*p[0] + sin(angle)*p[1],
 	cos(angle)*p[1] - sin(angle)*p[0],
   p[2]
-  
+
 ];
 
 // Expects circle centered around 0 in xy-plane
@@ -32,7 +32,7 @@ function rotate_point_around_z(angle, p) =
 // use (1) and get
 //     ax + by = r*r
 // This is linear, so extract x and plug into (1)
-function tangent_point(r, p) = 
+function tangent_point(r, p) =
 [
   r*r*p[0]/(p[0]*p[0] + p[1]*p[1])
    + (r/sqrt(p[0]*p[0] + p[1]*p[1]))
@@ -42,7 +42,7 @@ function tangent_point(r, p) =
      *sqrt(abs(r*r*p[1]*p[1]/(p[0]*p[0]+p[1]*p[1]) - r*r + p[0]*p[0]))
 ];
 
-function tangent_point_2(r, p) = 
+function tangent_point_2(r, p) =
 [
   r*r*p[0]/(p[0]*p[0] + p[1]*p[1])
    + (r/sqrt(p[0]*p[0] + p[1]*p[1]))
@@ -52,7 +52,7 @@ function tangent_point_2(r, p) =
      *sqrt(abs(r*r*p[1]*p[1]/(p[0]*p[0]+p[1]*p[1]) - r*r + p[0]*p[0]))
 ];
 
-function tangent_point_3(r, p) = 
+function tangent_point_3(r, p) =
 [
   r*r*p[0]/(p[0]*p[0] + p[1]*p[1])
    - (r/sqrt(p[0]*p[0] + p[1]*p[1]))
@@ -62,7 +62,7 @@ function tangent_point_3(r, p) =
      *sqrt(abs(r*r*p[1]*p[1]/(p[0]*p[0]+p[1]*p[1]) - r*r + p[0]*p[0]))
 ];
 
-function tangent_3d_point(r, p) = 
+function tangent_3d_point(r, p) =
 [
   r*r*p[0]/(p[0]*p[0] + p[1]*p[1])
    + (r/sqrt(p[0]*p[0] + p[1]*p[1]))
@@ -73,7 +73,7 @@ function tangent_3d_point(r, p) =
   0
 ];
 
-function tangent_3d_point_2(r, p) = 
+function tangent_3d_point_2(r, p) =
 [
   r*r*p[0]/(p[0]*p[0] + p[1]*p[1])
    + (r/sqrt(p[0]*p[0] + p[1]*p[1]))
@@ -84,7 +84,7 @@ function tangent_3d_point_2(r, p) =
   0
 ];
 
-function tangent_3d_point_3(r, p) = 
+function tangent_3d_point_3(r, p) =
 [
   r*r*p[0]/(p[0]*p[0] + p[1]*p[1])
    - (r/sqrt(p[0]*p[0] + p[1]*p[1]))
@@ -199,3 +199,17 @@ module point_cube(v, ang){
   }
 }
 //point_cube([10,11,12],60);
+
+module teardrop_line_shape(s=2.5){
+  difference(){
+    union(){
+      cylinder(r=s, h=0.5);
+      cube([s,s,0.5]);
+    }
+    translate([0,0,-1]){
+      cylinder(r=s-0.5, h=s);
+      cube([2,2,s]);
+    }
+  }
+}
+//teardrop_line_shape();
