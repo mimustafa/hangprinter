@@ -302,18 +302,27 @@ module bottom_plate(){
         rotate([0,0,120*A+7])
           translate(Line_action_point_abc_xy + [0,-8,th])
           scale([1,1,1.5])
-          linear_extrude(height=2)
-          text("A",halign="center",valign="center");
-        rotate([0,0,120*B+7])
-          translate(Line_action_point_abc_xy + [8,-9,th])
+          linear_extrude(height=2){
+            translate([-10,-3,0])
+              arrow_2d();
+            text("A",halign="center",valign="center");
+          }
+        rotate([0,0,120*B])
+          translate(Line_action_point_abc_xy + [26,-8,th])
           scale([1,1,1.5])
-          linear_extrude(height=2)
-          text("B",halign="center",valign="center");
-        rotate([0,0,120*C+7])
-          translate(Line_action_point_abc_xy + [-9,-15,th])
+          linear_extrude(height=2){
+            translate([-10,-3,0])
+              arrow_2d();
+            text("B",halign="center",valign="center");
+          }
+        rotate([0,0,120*C])
+          translate(Line_action_point_abc_xy + [-6,-15,th])
           scale([1,1,1.5])
-          linear_extrude(height=2)
-          text("C",halign="center",valign="center");
+          linear_extrude(height=2){
+            text("C",halign="center",valign="center");
+            translate([-10,3,0])
+              arrow_2d();
+          }
       }
     // Funnel shape for easier bowden tube fit
     translate([0,0,-0.1])
@@ -336,13 +345,15 @@ module bottom_plate(){
       // Motor screws
     ang = 50;
     // Screw holes for abc Nema
-    translate([0, 0, -1]){
-      four_point_translate()
-        translate([0,0,th-7])
-        rotate([0,0,ang])
-        color(Screw_color_2)
-        Nema17_screw_translate()
+    if(Render_motor_screws){
+      translate([0, 0, -1]){
+        four_point_translate()
+          translate([0,0,th-7])
+          rotate([0,0,ang])
+          color(Screw_color_2)
+          Nema17_screw_translate()
           M3_screw(10, updown=true);
+      }
     }
   }
 }
@@ -515,25 +526,27 @@ module drive_support_helper(non_motor_side,towermove=0){
     }
   }
   if(Render_screws){
-    translate([Drive_support_v[0]+8-3,27,-Drive_support_v[2]+th+3])
-      rotate([-90,0,0])
-      color(Screw_color_2)
-      M3_screw(8); // punch
-    translate([Drive_support_v[0]+8-3,27,th-3])
-      rotate([-90,0,0])
-      color(Screw_color_2)
-      M3_screw(8); // punch
-    if(!non_motor_side){
-    // Screw hole
-    translate([3+towermove,27,-Drive_support_v[2]+th+3])
-      rotate([-90,0,0])
-      color(Screw_color_2)
-      M3_screw(8); // punch
-    }else{
-      translate([Drive_support_v[0]/2,27,-Drive_support_v[2]+th+6])
+    translate([0,0,0]){
+      translate([Drive_support_v[0]+8-3,27,-Drive_support_v[2]+th+3])
         rotate([-90,0,0])
         color(Screw_color_2)
-        M3_screw(8);
+        M3_screw(8); // punch
+      translate([Drive_support_v[0]+8-3,27,th-3])
+        rotate([-90,0,0])
+        color(Screw_color_2)
+        M3_screw(8); // punch
+      if(!non_motor_side){
+        // Screw hole
+        translate([3+towermove,27,-Drive_support_v[2]+th+3])
+          rotate([-90,0,0])
+          color(Screw_color_2)
+          M3_screw(8); // punch
+      }else{
+        translate([Drive_support_v[0]/2,27,-Drive_support_v[2]+th+6])
+          rotate([-90,0,0])
+          color(Screw_color_2)
+          M3_screw(8);
+      }
     }
   }
 }

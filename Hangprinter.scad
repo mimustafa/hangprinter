@@ -127,34 +127,89 @@ module spool_view(){
 //spool_view();
 
 module exploded_stack(){
- translate([0,0,(Line_contacts_abcd_z[A] - Snelle_height/2)*2.3]) bearing_filled_sandwich();
- translate([0,0,(Line_contacts_abcd_z[B] - Snelle_height/2)*2.3]) bearing_filled_sandwich();
- translate([0,0,(Line_contacts_abcd_z[C] - Snelle_height/2)*2.3]) bearing_filled_sandwich();
- translate([0,0,(Line_contacts_abcd_z[D] - Snelle_height/2)*2.3]) bearing_filled_sandwich();
+  letters = ["A", "B", "C", "D"];
+  for(i = [0,1,2,3]){
+    translate([0,0,(Line_contacts_abcd_z[i] - Snelle_height/2)*2.3]){
+      bearing_filled_sandwich();
+      rotate([0,0,82])
+        translate([50,0,-2])
+        rotate([90,0,0]){
+          cube([20,20,1], center=false);
+          color("black")
+            translate([2,1,1])
+            text(letters[i], size=17);
+
+        }
+    }
+  }
 }
 //exploded_stack();
+//color(Printed_color_1)
+//precompiled("./stl/Complete_printer_17_Dec_2015/Bottom_plate_1.stl");
 //bottom_plate();
 
-module placed_stack(){
- translate([0,0,(Line_contacts_abcd_z[A] - Snelle_height/2)*1]) bearing_filled_sandwich();
- translate([0,0,(Line_contacts_abcd_z[B] - Snelle_height/2)*1]) bearing_filled_sandwich();
- translate([0,0,(Line_contacts_abcd_z[C] - Snelle_height/2)*1]) bearing_filled_sandwich();
- translate([0,0,(Line_contacts_abcd_z[D] - Snelle_height/2)*1]) bearing_filled_sandwich();
+module extruder_drive_render(){
+  drive_support(2);
+  translate([Bearing_623_outer_diameter,
+      Hobb_from_edge,
+      -Big_extruder_gear_height-1]){
+    translate([0,0,7])
+      Bearing_623();
+    translate([0,0,19])
+      Bearing_623();
+    translate([0,0,11])
+      hobbed_insert();
+    big_extruder_gear();
+  }
 }
-//placed_stack();
-//bottom_plate();
-//placed_fish_rings();
 
+// Letter signs at anchor points for explaining which is which
+module anchor_point_explanation(){
+  translate(Wall_action_point_a + [-25,19,10])
+    rotate([90,0,-20]){
+      cube([44,44,1], center=false);
+      color("black")
+        translate([4,2,1])
+        text("A", size=39);
+    }
+  translate(Wall_action_point_b + [0,0,0])
+    rotate([90,0,-20]){
+      cube([44,44,1], center=false);
+      color("black")
+        translate([4,2,1])
+        text("B", size=39);
+    }
+  translate(Wall_action_point_c + [0,0,0])
+    rotate([90,0,-20]){
+      cube([44,44,1], center=false);
+      color("black")
+        translate([4,2,1])
+        text("C", size=39);
+    }
+  translate(Ceiling_action_point + [0,0,0])
+    rotate([90,0,-20]){
+      cube([44,44,1], center=false);
+      color("black")
+        translate([4,2,1])
+        text("D", size=39);
+    }
+}
 
-//drive_support(2);
-//    translate([Bearing_623_outer_diameter,
-//               Hobb_from_edge,
-//               -Big_extruder_gear_height-1]){
-//    translate([0,0,7])
-//      Bearing_623();
-//    translate([0,0,19])
-//      Bearing_623();
-//    translate([0,0,11])
-//      hobbed_insert();
-//    big_extruder_gear();
-//}
+module placed_extruder_motor_with_gear(){
+  extruder_motor_translate(Extruder_motor_twist){
+    // For render "mount extruder motor step" in build manual
+      Nema17();
+    translate([0,0,55.5])
+      small_extruder_gear();
+    color(Screw_color_1){
+      for (i=[0,90]){
+        rotate([0,0,i+45]) translate([Nema17_screw_hole_width/2,0,0])
+          M3_screw(51, updown=true);
+        rotate([0,0,i+45]) translate([Nema17_screw_hole_width/2,0,-31])
+          M3_screw(56);
+      }
+    }
+  }
+}
+//placed_extruder_motor_with_gear();
+//full_render();

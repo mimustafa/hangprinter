@@ -83,11 +83,14 @@ module placed_lines(){
 
 module bearing_filled_sandwich(){
   sandwich();
-  translate([0,0,0]) Bearing_608();
+  if(Render_bearings)
+    translate([0,0,0])
+    Bearing_608();
   translate([0,0,Bearing_608_width])
   translate([0,0,0])
   color("gold") lock(Lock_radius_1, Lock_radius_2, Lock_height);
 }
+//bearing_filled_sandwich();
 
 module placed_sandwich(){
  translate([0,0,(Line_contacts_abcd_z[A] - Snelle_height/2)*1]) bearing_filled_sandwich();
@@ -95,7 +98,7 @@ module placed_sandwich(){
  translate([0,0,(Line_contacts_abcd_z[C] - Snelle_height/2)*1]) bearing_filled_sandwich();
  translate([0,0,(Line_contacts_abcd_z[D] - Snelle_height/2)*1]) bearing_filled_sandwich();
 }
-placed_sandwich();
+//placed_sandwich();
 //placed_fish_rings();
 
 // Used by support bearing in drive, only rendering

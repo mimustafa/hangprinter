@@ -213,3 +213,18 @@ module teardrop_line_shape(s=2.5){
   }
 }
 //teardrop_line_shape();
+
+module arrow_2d(){
+  rotate([0,0,30])
+    circle(r=5, $fn=3);
+  translate([-1.5,0,-h/2])
+    square([3,13]);
+}
+
+module arrow(h=10){
+  rotate([0,0,30])
+  cylinder(r=5, $fn=3, h=h, center=true);
+  translate([-1.5,0,-h/2])
+  cube([3,13,h]);
+}
+//arrow();
