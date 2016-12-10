@@ -187,11 +187,12 @@ float anchor_C_y = ANCHOR_C_Y;
 float anchor_C_z = ANCHOR_C_Z;
 float anchor_D_z = ANCHOR_D_Z;
 float delta_segments_per_second = DELTA_SEGMENTS_PER_SECOND;
-float delta[DIRS] = { 0 }; // TODO: should this be static?
-
-
-
-
+float delta_array_0[DIRS] = { 0 };
+float delta_array_1[DIRS] = { 0 };
+// Use pointers for delta arrays to allow swapping
+float *delta = delta_array_0;
+float *prev_delta = delta_array_1;
+float *tmp_delta; // Used to swap delta and prev_delta
 
 #ifdef SCARA
 float axis_scaling[3] = { 1, 1, 1 };    // Build size scaling, default to 1
@@ -769,7 +770,7 @@ void process_commands(){
       // Make moves without altering position variables.
       // Speed variables for planning are modified.
       case 3:
-        double tmp_delta[DIRS];
+        float tmp_delta[DIRS];
         memcpy(tmp_delta, delta, sizeof(delta));
         if(code_seen('A')) tmp_delta[A_AXIS] += code_value();
         if(code_seen('B')) tmp_delta[B_AXIS] += code_value();
@@ -783,11 +784,7 @@ void process_commands(){
             feedrate = next_feedrate;
           }
         }
-        plan_buffer_line(tmp_delta[A_AXIS],
-                         tmp_delta[B_AXIS],
-                         tmp_delta[C_AXIS],
-                         tmp_delta[D_AXIS],
-                         destination[E_CARTH], feedrate*feedmultiply/60/100, active_extruder, false);
+        plan_buffer_line(tmp_delta, delta, destination[E_CARTH], feedrate*feedmultiply/60/100, active_extruder, false);
         break;
       case 90: // G90
         relative_mode = false;
@@ -1770,26 +1767,43 @@ void process_commands(){
     // SERIAL_ECHOPGM(" steps="); SERIAL_ECHOLN(steps);
     // Calculate new steps per unit
 
+    // Set the axis_steps_per_unit
+    // Start with treating the g1 movement as a whole
+    for(int8_t i=0; i < 4; i++){
+      destination[i] = current_position[i] + difference[i];
+    }
+    // Swap pointers to make delta point to something that may be overwritten,
+    // and prev_delta point to the previous array that was filled by calculate_delta
+    tmp_delta = delta;
+    delta = prev_delta;
+    prev_delta = tmp_delta;
+    calculate_delta(destination); // delta will be in hangprinter abcde coords
+    // Use mean distance between enpoints because the same steps per unit will be used
+    // throughout the entire g1 linear move
+    float avg_delta[DIRS];
+    avg_delta[A_AXIS] = (delta[A_AXIS] + prev_delta[A_AXIS])/2;
+    avg_delta[B_AXIS] = (delta[B_AXIS] + prev_delta[B_AXIS])/2;
+    avg_delta[C_AXIS] = (delta[C_AXIS] + prev_delta[C_AXIS])/2;
+    avg_delta[D_AXIS] = (delta[D_AXIS] + prev_delta[D_AXIS])/2;
+    update_axis_steps_per_unit(avg_delta);
+    // After this, prev_delta holds the current delta distances,
+    //             delta holds end of the move we want to plan (far too long forward)
+    //             better swap them before they're used again
+
     for (int s = 1; s <= steps; s++){ // Here lines are split into segments. tobben 20. may 2015
       float fraction = float(s) / float(steps);
       for(int8_t i=0; i < 4; i++){
         destination[i] = current_position[i] + difference[i] * fraction;
       }
-      //SERIAL_ECHO(destination[0]);
-      //SERIAL_ECHO("\n");
-      //SERIAL_ECHO(destination[1]);
-      //SERIAL_ECHO("\n");
-      //SERIAL_ECHO(destination[2]);
-      //SERIAL_ECHO("\n");
-      //SERIAL_ECHO(destination[3]);
-      //SERIAL_ECHO("\n");
+      // swap pointers
+      tmp_delta = delta;
+      delta = prev_delta;
+      prev_delta = tmp_delta;
       calculate_delta(destination); // delta will be in hangprinter abcde coords
-      plan_buffer_line(delta[A_AXIS], delta[B_AXIS], delta[C_AXIS], delta[D_AXIS],
+      plan_buffer_line(delta, prev_delta,
           destination[E_CARTH], feedrate*feedmultiply/60/100.0,
           active_extruder, true);
     }
-    // Dynamic update of steps per unit to compensate line buildup on spool
-    update_axis_steps_per_unit(delta);
 
     for(int8_t i=0; i < 4; i++){
       current_position[i] = destination[i];

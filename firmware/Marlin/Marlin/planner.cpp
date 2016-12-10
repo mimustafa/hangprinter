@@ -67,14 +67,10 @@ float max_feedrate[NUM_AXIS]; // set the max speeds
 
 
 // steps per mm calculations
-const float steps_per_unit_times_r[DIRS] = {STEPS_PER_SPOOL_RADIAN[A_AXIS],
-                                            STEPS_PER_SPOOL_RADIAN[B_AXIS],
-                                            STEPS_PER_SPOOL_RADIAN[C_AXIS],
-                                            STEPS_PER_SPOOL_RADIAN[D_AXIS]};
-//const float steps_per_unit_times_r[DIRS] = {(float)MECHANICAL_ADVANTAGE_A*STEPS_PER_SPOOL_RADIAN[A_AXIS],
-//                                            (float)MECHANICAL_ADVANTAGE_B*STEPS_PER_SPOOL_RADIAN[B_AXIS],
-//                                            (float)MECHANICAL_ADVANTAGE_C*STEPS_PER_SPOOL_RADIAN[C_AXIS],
-//                                            (float)MECHANICAL_ADVANTAGE_D*STEPS_PER_SPOOL_RADIAN[D_AXIS]};
+const float steps_per_unit_times_r[DIRS] = {(float)MECHANICAL_ADVANTAGE_A*STEPS_PER_SPOOL_RADIAN[A_AXIS],
+                                            (float)MECHANICAL_ADVANTAGE_B*STEPS_PER_SPOOL_RADIAN[B_AXIS],
+                                            (float)MECHANICAL_ADVANTAGE_C*STEPS_PER_SPOOL_RADIAN[C_AXIS],
+                                            (float)MECHANICAL_ADVANTAGE_D*STEPS_PER_SPOOL_RADIAN[D_AXIS]};
 
 // Two double lines means founr lines
 const int nr_of_lines_in_direction[DIRS] = {MECHANICAL_ADVANTAGE_A*POINTS_A,
@@ -166,19 +162,19 @@ static int8_t prev_block_index(int8_t block_index) {
 void update_axis_steps_per_unit(const float* d){  // d is absolute ABCD distances to anchors
   // Divide by new radius to find new steps/mm
   axis_steps_per_unit[A_AXIS] =
-    steps_per_unit_times_r[A_AXIS]/sqrt(SPOOL_BUILDUP_FACTOR*(LINE_ON_SPOOL_ORIGO[A_AXIS] + (float)nr_of_lines_in_direction[A_AXIS]*(d[A_AXIS] - INITIAL_DISTANCES[A_AXIS])) + SPOOL_RADIUS2);
+    steps_per_unit_times_r[A_AXIS]/sqrt(SPOOL_BUILDUP_FACTOR*(LINE_ON_SPOOL_ORIGO[A_AXIS] + (float)nr_of_lines_in_direction[A_AXIS]*(INITIAL_DISTANCES[A_AXIS] - d[A_AXIS])) + SPOOL_RADIUS2);
   axis_steps_per_unit[B_AXIS] =
-    steps_per_unit_times_r[B_AXIS]/sqrt(SPOOL_BUILDUP_FACTOR*(LINE_ON_SPOOL_ORIGO[B_AXIS] + (float)nr_of_lines_in_direction[B_AXIS]*(d[B_AXIS] - INITIAL_DISTANCES[B_AXIS])) + SPOOL_RADIUS2);
+    steps_per_unit_times_r[B_AXIS]/sqrt(SPOOL_BUILDUP_FACTOR*(LINE_ON_SPOOL_ORIGO[B_AXIS] + (float)nr_of_lines_in_direction[B_AXIS]*(INITIAL_DISTANCES[B_AXIS] - d[B_AXIS])) + SPOOL_RADIUS2);
   axis_steps_per_unit[C_AXIS] =
-    steps_per_unit_times_r[C_AXIS]/sqrt(SPOOL_BUILDUP_FACTOR*(LINE_ON_SPOOL_ORIGO[C_AXIS] + (float)nr_of_lines_in_direction[C_AXIS]*(d[C_AXIS] - INITIAL_DISTANCES[C_AXIS])) + SPOOL_RADIUS2);
+    steps_per_unit_times_r[C_AXIS]/sqrt(SPOOL_BUILDUP_FACTOR*(LINE_ON_SPOOL_ORIGO[C_AXIS] + (float)nr_of_lines_in_direction[C_AXIS]*(INITIAL_DISTANCES[C_AXIS] - d[C_AXIS])) + SPOOL_RADIUS2);
   axis_steps_per_unit[D_AXIS] =
-    steps_per_unit_times_r[D_AXIS]/sqrt(SPOOL_BUILDUP_FACTOR*(LINE_ON_SPOOL_ORIGO[D_AXIS] + (float)nr_of_lines_in_direction[D_AXIS]*(d[D_AXIS] - INITIAL_DISTANCES[D_AXIS])) + SPOOL_RADIUS2);
+    steps_per_unit_times_r[D_AXIS]/sqrt(SPOOL_BUILDUP_FACTOR*(LINE_ON_SPOOL_ORIGO[D_AXIS] + (float)nr_of_lines_in_direction[D_AXIS]*(INITIAL_DISTANCES[D_AXIS] - d[D_AXIS])) + SPOOL_RADIUS2);
 
   // Uglyhack test. Can we fool printer to think it got here with the new steps per unit?
-  position[A_AXIS] = d[A_AXIS]*axis_steps_per_unit[A_AXIS];
-  position[B_AXIS] = d[B_AXIS]*axis_steps_per_unit[B_AXIS];
-  position[C_AXIS] = d[C_AXIS]*axis_steps_per_unit[C_AXIS];
-  position[D_AXIS] = d[D_AXIS]*axis_steps_per_unit[D_AXIS];
+  //position[A_AXIS] = d[A_AXIS]*axis_steps_per_unit[A_AXIS];
+  //position[B_AXIS] = d[B_AXIS]*axis_steps_per_unit[B_AXIS];
+  //position[C_AXIS] = d[C_AXIS]*axis_steps_per_unit[C_AXIS];
+  //position[D_AXIS] = d[D_AXIS]*axis_steps_per_unit[D_AXIS];
 }
 
 // Calculates the distance (not time) it takes to accelerate from initial_rate to target_rate using the
@@ -527,8 +523,9 @@ float junction_deviation = 0.1;
 // Help, why does this comment contradict comments in planner.h?
 // I'm quite sure steps_a, _b, ... are absolute step count along each axis,
 // and that a, b, c, d are absolute positions in mm that we plan on taking. tobben 9 sep 2015
-// TODO: target must be set using be relative movements, not absolute ones...
-void plan_buffer_line(const float &a, const float &b, const float &c, const float &d, const float &e,
+// TODO: delta and prev_delta are only used for delta_mm = delta - prev_delta
+// Better move this logic out of this function
+void plan_buffer_line(float* delta, float* prev_delta, const float &e,
                      float feed_rate, const uint8_t &extruder, unsigned char count_it){
   // Calculate the buffer head after we push this byte
   int next_buffer_head = next_block_index(block_buffer_head);
@@ -541,19 +538,20 @@ void plan_buffer_line(const float &a, const float &b, const float &c, const floa
     manage_inactivity();
   }
 
+  float delta_mm[NUM_AXIS];
+  delta_mm[A_AXIS] = delta[A_AXIS]-prev_delta[A_AXIS];
+  delta_mm[B_AXIS] = delta[B_AXIS]-prev_delta[B_AXIS];
+  delta_mm[C_AXIS] = delta[C_AXIS]-prev_delta[C_AXIS];
+  delta_mm[D_AXIS] = delta[D_AXIS]-prev_delta[D_AXIS];
+
   // The target position of the tool in absolute steps
   // Calculate target position in absolute steps
   //this should be done after the wait, because otherwise a M92 code within the gcode disrupts this calculation somehow
-  long target[NUM_AXIS];
-  target[A_AXIS] = lround(a*axis_steps_per_unit[A_AXIS]);
-  //SERIAL_ECHO("a:");
-  //SERIAL_ECHOLN(a);
-  //SERIAL_ECHO("axis_steps_per_unit[A_AXIS]: ");
-  //SERIAL_ECHOLN(axis_steps_per_unit[A_AXIS]);
-  target[B_AXIS] = lround(b*axis_steps_per_unit[B_AXIS]);
-  target[C_AXIS] = lround(c*axis_steps_per_unit[C_AXIS]);
-  target[D_AXIS] = lround(d*axis_steps_per_unit[D_AXIS]);
-  target[E_AXIS] = lround(e*axis_steps_per_unit[E_AXIS]);
+  long target_e = lround(e*axis_steps_per_unit[E_AXIS]);
+  long steps_diff[DIRS] = {lround(delta_mm[A_AXIS]*axis_steps_per_unit[A_AXIS]),
+                           lround(delta_mm[B_AXIS]*axis_steps_per_unit[B_AXIS]),
+                           lround(delta_mm[C_AXIS]*axis_steps_per_unit[C_AXIS]),
+                           lround(delta_mm[D_AXIS]*axis_steps_per_unit[D_AXIS])};
 
   // Prepare to set up new block
   block_t *block = &block_buffer[block_buffer_head];
@@ -567,10 +565,10 @@ void plan_buffer_line(const float &a, const float &b, const float &c, const floa
   // Number of steps for each axis
   //SERIAL_ECHO("position[A_AXIS]: ");
   //SERIAL_ECHOLN(position[A_AXIS]);
-  block->steps_a = labs(target[A_AXIS]-position[A_AXIS]);
-  block->steps_b = labs(target[B_AXIS]-position[B_AXIS]);
-  block->steps_c = labs(target[C_AXIS]-position[C_AXIS]);
-  block->steps_d = labs(target[D_AXIS]-position[D_AXIS]);
+  block->steps_a = labs(steps_diff[A_AXIS]);
+  block->steps_b = labs(steps_diff[B_AXIS]);
+  block->steps_c = labs(steps_diff[C_AXIS]);
+  block->steps_d = labs(steps_diff[D_AXIS]);
   //SERIAL_ECHO("block->steps_a: ");
   //SERIAL_ECHOLN(block->steps_a);
   //SERIAL_ECHO("block->steps_b: ");
@@ -580,7 +578,7 @@ void plan_buffer_line(const float &a, const float &b, const float &c, const floa
   //SERIAL_ECHO("block->steps_d: ");
   //SERIAL_ECHOLN(block->steps_d);
 
-  block->steps_e = labs(target[E_AXIS]-position[E_AXIS]);
+  block->steps_e = labs(target_e - position[E_AXIS]);
   block->steps_e *= volumetric_multiplier[active_extruder];
   block->steps_e *= extrudemultiply;
   block->steps_e /= 100;
@@ -594,11 +592,11 @@ void plan_buffer_line(const float &a, const float &b, const float &c, const floa
   // Compute direction bits for this block
   block->direction_bits = 0;
 
-  if(target[A_AXIS] < position[A_AXIS]) block->direction_bits |= (1<<A_AXIS);
-  if(target[B_AXIS] < position[B_AXIS]) block->direction_bits |= (1<<B_AXIS);
-  if(target[C_AXIS] < position[C_AXIS]) block->direction_bits |= (1<<C_AXIS);
-  if(target[D_AXIS] < position[D_AXIS]) block->direction_bits |= (1<<D_AXIS);
-  if(target[E_AXIS] < position[E_AXIS]) block->direction_bits |= (1<<E_AXIS);
+  if(steps_diff[A_AXIS] < 0) block->direction_bits |= (1<<A_AXIS);
+  if(steps_diff[B_AXIS] < 0) block->direction_bits |= (1<<B_AXIS);
+  if(steps_diff[C_AXIS] < 0) block->direction_bits |= (1<<C_AXIS);
+  if(steps_diff[D_AXIS] < 0) block->direction_bits |= (1<<D_AXIS);
+  if(target_e < position[E_AXIS]) block->direction_bits |= (1<<E_AXIS);
 
   block->active_extruder = extruder;
 
@@ -618,22 +616,7 @@ void plan_buffer_line(const float &a, const float &b, const float &c, const floa
     if(feed_rate<mintravelfeedrate) feed_rate=mintravelfeedrate;
   }
 
-  float delta_mm[NUM_AXIS];
-  delta_mm[A_AXIS] = (target[A_AXIS]-position[A_AXIS])/axis_steps_per_unit[A_AXIS];
-  delta_mm[B_AXIS] = (target[B_AXIS]-position[B_AXIS])/axis_steps_per_unit[B_AXIS];
-  delta_mm[C_AXIS] = (target[C_AXIS]-position[C_AXIS])/axis_steps_per_unit[C_AXIS];
-  delta_mm[D_AXIS] = (target[D_AXIS]-position[D_AXIS])/axis_steps_per_unit[D_AXIS];
-  //SERIAL_ECHO("delta_mm[A_AXIS]: ");
-  //SERIAL_ECHOLN(delta_mm[A_AXIS]);
-  //SERIAL_ECHO("delta_mm[B_AXIS]: ");
-  //SERIAL_ECHOLN(delta_mm[B_AXIS]);
-  //SERIAL_ECHO("delta_mm[C_AXIS]: ");
-  //SERIAL_ECHOLN(delta_mm[C_AXIS]);
-  //SERIAL_ECHO("delta_mm[D_AXIS]: ");
-  //SERIAL_ECHOLN(delta_mm[D_AXIS]);
-  //SERIAL_ECHO("delta_mm[E_AXIS]: ");
-  //SERIAL_ECHOLN(delta_mm[E_AXIS]);
-  delta_mm[E_AXIS] =((target[E_AXIS]-position[E_AXIS])/axis_steps_per_unit[E_AXIS])*volumetric_multiplier[active_extruder]*extrudemultiply/100.0;
+  delta_mm[E_AXIS] =((target_e - position[E_AXIS])/axis_steps_per_unit[E_AXIS])*volumetric_multiplier[active_extruder]*extrudemultiply/100.0;
 
   if (block->steps_a <=dropsegments && block->steps_b <=dropsegments && block->steps_c <=dropsegments && block->steps_d <=dropsegments ){
     block->millimeters = fabs(delta_mm[E_AXIS]);
@@ -781,7 +764,12 @@ void plan_buffer_line(const float &a, const float &b, const float &c, const floa
 
   // Update position
   if(block->count_it){
-    memcpy(position, target, sizeof(target)); // position[] = target[]
+    position[A_AXIS] += steps_diff[A_AXIS];
+    position[B_AXIS] += steps_diff[B_AXIS];
+    position[C_AXIS] += steps_diff[C_AXIS];
+    position[D_AXIS] += steps_diff[D_AXIS];
+    position[E_AXIS] = target_e;
+    //memcpy(position, target, sizeof(target)); // position[] = target[]
   }
 
   planner_recalculate();

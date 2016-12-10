@@ -177,7 +177,9 @@ void ClearToSend();
 
 void get_coordinates();
 void calculate_delta(float cartesian[3]);
-extern float delta[DIRS];
+
+extern float *delta;
+extern float *prev_delta;
 void prepare_move();
 void kill();
 void Stop();
