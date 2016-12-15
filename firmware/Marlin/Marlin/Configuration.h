@@ -90,6 +90,9 @@
 // and processor overload (too many expensive sqrt calls).
 #define DELTA_SEGMENTS_PER_SECOND 80
 
+// Set to integer less than 65536
+#define DELTA_SEGMENTS_PER_STEPS_PER_UNIT_UPDATE 40
+
 // NOTE! all values here MUST be floating point, so always have a decimal point in them
 // Measure from fish eye to anchor point along Carthesian axis
 // Or do other measurments and calculate Carthesian axis lengths by trigonometry

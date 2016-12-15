@@ -1684,33 +1684,25 @@ void process_commands(){
     if(cartesian_mm < 0.000001){ return; }
     float seconds = 6000 * cartesian_mm / feedrate / feedmultiply;
     int steps = max(1, int(delta_segments_per_second * seconds));
+    static uint16_t steps_per_unit_update_counter = 0;
     // SERIAL_ECHOPGM("mm="); SERIAL_ECHO(cartesian_mm);
     // SERIAL_ECHOPGM(" seconds="); SERIAL_ECHO(seconds);
     // SERIAL_ECHOPGM(" steps="); SERIAL_ECHOLN(steps);
-    //
-    // Use steps per unit that fits middle of g1 line
-    float halfway_delta[4];
-    float halfway[3];
-    for(int8_t i=0; i < 3; i++){
-      halfway[i] = current_position[i] + 0.5*difference[i];
-    }
-    calculate_delta(halfway, halfway_delta);
-    update_axis_steps_per_unit(delta, halfway_delta);
 
-    for (int s = 1; s <= steps; s++){ // Here lines are split into segments. tobben 20. may 2015
+    for (int s = 1; s <= steps; s++, steps_per_unit_update_counter++){ // Here lines are split into segments. tobben 20. may 2015
       float fraction = float(s) / float(steps);
       for(int8_t i=0; i < 4; i++){
         destination[i] = current_position[i] + difference[i] * fraction;
       }
-
-      calculate_delta(destination, delta); // delta will be in hangprinter abcde coords
+      calculate_delta(destination, delta);
+      // Calculate new axis_steps_per_unit every constant number of segments
+      if(!(steps_per_unit_update_counter % DELTA_SEGMENTS_PER_STEPS_PER_UNIT_UPDATE)){
+        update_axis_steps_per_unit(delta, delta);
+      }
       plan_buffer_line(delta[A_AXIS], delta[B_AXIS], delta[C_AXIS], delta[D_AXIS],
           destination[E_CARTH], feedrate*feedmultiply/60/100.0,
           active_extruder, true);
     }
-    // Correct steps per unit after move
-    // During series of G1 moves, this will never have effect
-    //update_axis_steps_per_unit(delta);
 
     for(int8_t i=0; i < 4; i++){
       current_position[i] = destination[i];
