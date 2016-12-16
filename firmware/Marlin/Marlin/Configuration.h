@@ -88,10 +88,10 @@
 // Make delta curves from many straight lines (linear interpolation).
 // This is a trade-off between visible corners (not enough segments)
 // and processor overload (too many expensive sqrt calls).
-#define DELTA_SEGMENTS_PER_SECOND 80
+#define DELTA_SEGMENTS_PER_SECOND 60
 
 // Set to integer less than 65536
-#define DELTA_SEGMENTS_PER_STEPS_PER_UNIT_UPDATE 40
+#define DELTA_SEGMENTS_PER_STEPS_PER_UNIT_UPDATE 50
 
 // NOTE! all values here MUST be floating point, so always have a decimal point in them
 // Measure from fish eye to anchor point along Carthesian axis
@@ -109,6 +109,7 @@
 #define ANCHOR_C_Z -128.0 // measured from print surface to frame middle. In mm (was -141. Diff is 18)
 // It's assumed that ceiling frame part is directly above origo
 #define ANCHOR_D_Z 2295.0 // measured along vertical line, from fish eye to anchor point. In mm (was 2286 diff is 9)
+//#define ANCHOR_D_Z 6295.0
 
 //===========================================================================
 //============================= Thermal Settings ============================
@@ -470,7 +471,7 @@ const float LINE_ON_SPOOL_ORIGO[DIRS] = {4920.0,5200.0,5600.0,6000.0};
 const float STEPS_PER_SPOOL_RADIAN[DIRS] = {1216.651,1216.651,1216.651,10949.860};
 
 // The A, B, C and D values no longer used. Dynamic values used instead.
-#define DEFAULT_AXIS_STEPS_PER_UNIT   {73.747, 73.747, 73.747, 663.7, 134.0}  // steps per unit with no line on spools for Hangprinter
+#define DEFAULT_AXIS_STEPS_PER_UNIT   {73.747, 73.747, 73.747, 663.7, 90.0}  // steps per unit with no line on spools for Hangprinter
 
 #define DEFAULT_MAX_FEEDRATE          {300, 300, 300, 80, 25}    // (mm/sec)
 #define DEFAULT_MAX_ACCELERATION      {3000,3000,3000,3000,10000}    // X, Y, Z, E maximum start speed for accelerated moves.
