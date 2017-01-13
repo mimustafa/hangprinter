@@ -94,25 +94,25 @@
 // placed in origo) and frame measurment point,
 // alternatively measure from one fish eye, along corresponding line to the lines anchor point.
 // Subtracted 2 mm because of double line configuration
-#define ANCHOR_A_X 2032.0 // anchor point A's Carthesian x-coordinate. In mm
-#define ANCHOR_A_Y 975.0
-#define ANCHOR_A_Z -160.0 // measured from print surface to frame middle. In mm (was 130 diff is 11)
+#define ANCHOR_A_X 1320.0
+#define ANCHOR_A_Y 445.0
+#define ANCHOR_A_Z 18.0
 #define INITIAL_LENGTH_A sqrt(ANCHOR_A_X*ANCHOR_A_X + ANCHOR_A_Y*ANCHOR_A_Y + ANCHOR_A_Z*ANCHOR_A_Z)
 // This gives A-length of sqrt(887^2 + 575^2 + 130^2) = 1065
 // Subtracted 2 mm because of double line configuration
-#define ANCHOR_B_X -1940.0
-#define ANCHOR_B_Y 1186.0
-#define ANCHOR_B_Z -150.2 // measured from print surface to frame middle. In mm (was -119. Diff is 17)
+#define ANCHOR_B_X -585.0
+#define ANCHOR_B_Y 1290.0
+#define ANCHOR_B_Z -107.0
 #define INITIAL_LENGTH_B sqrt(ANCHOR_B_X*ANCHOR_B_X + ANCHOR_B_Y*ANCHOR_B_Y + ANCHOR_B_Z*ANCHOR_B_Z)
 // This gives B-length of sqrt(867^2 + 119^2) = 875
 // Subtracted 2 mm because of double line configuration
-#define ANCHOR_C_X 430.0
-#define ANCHOR_C_Y -2426.0
-#define ANCHOR_C_Z -125.0 // measured from print surface to frame middle. In mm (was -141. Diff is 18)
+#define ANCHOR_C_X -890.0
+#define ANCHOR_C_Y -1250.0
+#define ANCHOR_C_Z 704.0
 #define INITIAL_LENGTH_C sqrt(ANCHOR_C_X*ANCHOR_C_X + ANCHOR_C_Y*ANCHOR_C_Y + ANCHOR_C_Z*ANCHOR_C_Z)
 // This gives C-length of sqrt(1429^2 + 1317^2 + 141^2) = 1948.4
-// It's important that middle of frame D is directly above (x,y) = (0,0)
-#define ANCHOR_D_Z 5145.0 // measured along vertical line, from fish eye to anchor point. In mm (was 2286 diff is 9)
+ // It's important that middle of frame D is directly above (x,y) = (0,0)
+#define ANCHOR_D_Z 2785.0 // measured along vertical line, from fish eye to anchor point. In mm (was 2286 diff is 9)
 #define INITIAL_LENGTH_D ANCHOR_D_Z
 
 //===========================================================================
@@ -314,7 +314,7 @@
 // uncomment the 2 defines below:
 
 // Parameters for all extruder heaters
-#define THERMAL_RUNAWAY_PROTECTION_PERIOD 100 //in seconds
+#define THERMAL_RUNAWAY_PROTECTION_PERIOD 200 //in seconds
 #define THERMAL_RUNAWAY_PROTECTION_HYSTERESIS 4 // in degree Celsius
 
 // If you want to enable this feature for your bed heater,
@@ -375,9 +375,9 @@ const bool Z_MAX_ENDSTOP_INVERTING = true; // set to true to invert the logic of
 #define DISABLE_E false // For all extruders
 #define DISABLE_INACTIVE_EXTRUDER false //disable only inactive extruders and keep active extruder enabled
 
-#define INVERT_X_DIR false // DELTA does not invert
-#define INVERT_Y_DIR false
-#define INVERT_Z_DIR false
+#define INVERT_X_DIR true // DELTA does not invert
+#define INVERT_Y_DIR true
+#define INVERT_Z_DIR true
 
 #define INVERT_E0_DIR true   // for direct drive extruder v9 set to true, for geared extruder set to false
 #define INVERT_E1_DIR true    // for direct drive extruder v9 set to true, for geared extruder set to false
@@ -464,8 +464,9 @@ const bool Z_MAX_ENDSTOP_INVERTING = true; // set to true to invert the logic of
 //Length per step = (33*2*pi)/(16*200*43/9)
 //Steps per mm = (16*200*43/9)/(33*2*pi) = 73.74
 //For worm gear: (16*200*43)/(33*2*pi) = 663.63
-//#define DEFAULT_AXIS_STEPS_PER_UNIT   {53.322, 53.322, 53.322, 53.322, 140.0}  // default steps per unit for Hangprinter
-#define DEFAULT_AXIS_STEPS_PER_UNIT   {36.873, 36.873, 36.873, 663.7, 90.0}  // default steps per unit for Hangprinter
+//#define DEFAULT_AXIS_STEPS_PER_UNIT   {36.873, 36.873, 36.873, 663.7, 90.0}  // default steps per unit for Hangprinter
+//#define DEFAULT_AXIS_STEPS_PER_UNIT   {73.746, 73.746, 73.746, 1327.4, 180.0}  // default steps per unit for Hangprinter
+#define DEFAULT_AXIS_STEPS_PER_UNIT   {147.49, 147.49, 147.49, 2654.8, 180.0}  // default steps per unit for Hangprinter
 #define DEFAULT_MAX_FEEDRATE          {300, 300, 300, 80, 25}    // (mm/sec)
 #define DEFAULT_MAX_ACCELERATION      {3000,3000,3000,3000,10000}    // X, Y, Z, E maximum start speed for accelerated moves. E default values are good for skeinforge 40+, for older versions raise them a lot.
 
